@@ -170,7 +170,7 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
     <div class="sync-dot"></div>
     <div class="sync-txt" id="syncTxt">متصل</div>
     <button class="save-btn" onclick="saveAll()">💾 حفظ التغييرات</button>
-    <button class="logout-btn" onclick="switchTab('password', document.querySelectorAll('.tab')[2])">🔑 تغيير الرمز</button>
+    <button class="logout-btn" onclick="goToPassword()">🔑 تغيير الرمز</button>
     <button class="logout-btn" onclick="logout()">خروج</button>
   </div>
 
@@ -454,6 +454,13 @@ window.addEventListener('load', async()=>{
     document.getElementById('setupScreen').style.display  = 'flex';
   }
 });
+
+function goToPassword(){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('sec-password').classList.add('active');
+  document.querySelectorAll('.tab')[2].classList.add('active');
+}
 
 // ============ CHANGE PASSWORD ============
 async function changePassword(){
