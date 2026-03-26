@@ -234,6 +234,27 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
       </div>
     </div>
 
+    <!-- PASSWORD SECTION -->
+    <div class="section" id="sec-password">
+      <div class="card">
+        <div class="card-title">🔑 تغيير كلمة مرور المدير</div>
+        <div class="form-group">
+          <label class="form-label">كلمة المرور الحالية</label>
+          <input class="form-input" id="oldPw" type="password" placeholder="••••••"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">كلمة المرور الجديدة</label>
+          <input class="form-input" id="changePw1" type="password" placeholder="••••••"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">أعد كتابة الجديدة</label>
+          <input class="form-input" id="changePw2" type="password" placeholder="••••••"/>
+        </div>
+        <div id="changePassErr" style="color:var(--red);font-size:12px;margin-bottom:12px;display:none"></div>
+        <button class="add-btn" onclick="changePassword()">💾 حفظ كلمة المرور الجديدة</button>
+      </div>
+    </div>
+
   </div>
 </div>
 
