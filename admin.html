@@ -61,6 +61,17 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
 .login-btn:active{transform:scale(.97)}
 .login-err{color:var(--red);font-size:12px;margin-top:10px;display:none}
 
+/* SETUP */
+#setupScreen{display:none;align-items:center;justify-content:center;min-height:100vh}
+.setup-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:48px 40px;width:380px;text-align:center}
+.setup-icon{font-size:56px;margin-bottom:16px}
+.setup-title{font-size:20px;font-weight:800;margin-bottom:6px}
+.setup-sub{font-size:13px;color:var(--muted);margin-bottom:28px;line-height:1.6}
+.setup-input{width:100%;padding:13px 16px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:16px;font-family:inherit;outline:none;text-align:center;letter-spacing:4px;margin-bottom:12px;transition:.2s}
+.setup-input:focus{border-color:var(--accent)}
+.setup-btn{width:100%;padding:13px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit}
+.setup-err{color:var(--red);font-size:12px;margin-top:10px;display:none}
+
 /* DASHBOARD */
 #dashboard{display:none}
 
@@ -132,6 +143,20 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
     </div>
     <button class="login-btn" onclick="checkPass()">دخول ←</button>
     <div class="login-err" id="loginErr">❌ كلمة المرور خاطئة</div>
+  </div>
+</div>
+
+<!-- SETUP - first time -->
+<div id="setupScreen" style="display:none;align-items:center;justify-content:center;min-height:100vh">
+  <div class="setup-box">
+    <div class="setup-icon">🔐</div>
+    <div class="setup-title">إعداد كلمة المرور</div>
+    <div class="setup-sub">أول مرة تفتح لوحة التحكم<br/>حدد كلمة مرور للمدير</div>
+    <input class="setup-input" id="newPw1" type="password" placeholder="كلمة المرور"/>
+    <input class="setup-input" id="newPw2" type="password" placeholder="أعد كتابتها" style="margin-top:8px"/>
+    <div class="setup-err" id="setupErr"></div>
+    <br/>
+    <button class="setup-btn" onclick="saveNewPass()">حفظ كلمة المرور ←</button>
   </div>
 </div>
 
@@ -215,7 +240,7 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
 
 <script>
 // ============ CONFIG ============
-const ADMIN_PASS = 'admin2026'; // ← غيّر كلمة المرور هنا
+let ADMIN_PASS = null; // تُحمل من Firebase
 
 // ============ STATE ============
 let students = [];
@@ -228,8 +253,19 @@ let announcements = [];
 let attendDB = [];
 
 // ============ LOGIN ============
-function checkPass(){
+async function checkPass(){
   const pw = document.getElementById('pwInput').value;
+  if(!ADMIN_PASS){
+    // لم تُحمل بعد — جرب مرة ثانية
+    toast('⏳ جاري التحميل...');
+    await loadAdminPass();
+  }
+  if(!ADMIN_PASS){
+    // لا توجد كلمة مرور — اعرض شاشة الإعداد
+    document.getElementById('loginScreen').style.display  = 'none';
+    document.getElementById('setupScreen').style.display  = 'flex';
+    return;
+  }
   if(pw === ADMIN_PASS){
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('dashboard').style.display   = 'block';
@@ -244,12 +280,34 @@ function logout(){
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('pwInput').value = '';
 }
+async function saveNewPass(){
+  const p1 = document.getElementById('newPw1').value.trim();
+  const p2 = document.getElementById('newPw2').value.trim();
+  const err = document.getElementById('setupErr');
+  if(!p1 || p1.length < 4){ err.style.display='block'; err.textContent='❌ كلمة المرور قصيرة جداً'; return; }
+  if(p1 !== p2){ err.style.display='block'; err.textContent='❌ كلمتا المرور لا تتطابقان'; return; }
+  await waitFb();
+  await window._setDoc(window._doc(window._db,'school','adminConfig'), { pass: p1 });
+  ADMIN_PASS = p1;
+  document.getElementById('setupScreen').style.display  = 'none';
+  document.getElementById('dashboard').style.display    = 'block';
+  loadData();
+  toast('✅ تم حفظ كلمة المرور');
+}
 
 // ============ FIREBASE ============
 const waitFb = () => new Promise(res => {
   if(window._fbReady) res();
   else window.addEventListener('fbReady', res, {once:true});
 });
+
+async function loadAdminPass(){
+  await waitFb();
+  try {
+    const snap = await window._getDoc(window._doc(window._db,'school','adminConfig'));
+    if(snap.exists()) ADMIN_PASS = snap.data().pass;
+  } catch(e){}
+}
 
 async function loadData(){
   setSyncTxt('جاري التحميل...');
@@ -386,6 +444,17 @@ function deleteSubject(sub){
   toast('🗑 تم حذف مادة ' + sub);
 }
 
+// ============ INIT ============
+// حمّل كلمة المرور عند فتح الصفحة
+waitFb().then(async()=>{
+  await loadAdminPass();
+  if(!ADMIN_PASS){
+    // أول مرة — اعرض شاشة الإعداد مباشرة
+    document.getElementById('loginScreen').style.display  = 'none';
+    document.getElementById('setupScreen').style.display  = 'flex';
+  }
+});
+
 // ============ HELPERS ============
 function setSyncTxt(t){ document.getElementById('syncTxt').textContent = t; }
 function toast(msg){
@@ -397,4 +466,3 @@ function toast(msg){
 </script>
 </body>
 </html>
-
