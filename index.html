@@ -12,7 +12,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC_bKThc6ZLaAXOo6jhm74AWDUYvX2Wi5w",
@@ -31,6 +31,8 @@ window._db   = db;
 window._auth = auth;
 window._GoogleAuthProvider = GoogleAuthProvider;
 window._signInWithPopup    = signInWithPopup;
+window._signInWithRedirect  = signInWithRedirect;
+window._getRedirectResult   = getRedirectResult;
 window._signOut            = signOut;
 window._doc                = doc;
 window._getDoc             = getDoc;
@@ -420,23 +422,53 @@ function backToLoginFromTeacher(){
 async function handleGoogleLogin(){
   try {
     const provider = new window._GoogleAuthProvider();
-    const result   = await window._signInWithPopup(window._auth, provider);
-    const email    = result.user.email;
-    const name     = result.user.displayName;
-    const allowed  = allowedTeacherEmails.length === 0 || allowedTeacherEmails.includes(email);
-    if(!allowed){
-      document.getElementById('googleLoginError').style.display='block';
-      await window._signOut(window._auth);
-      return;
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if(isMobile){
+      await window._signInWithRedirect(window._auth, provider);
+    } else {
+      const result = await window._signInWithPopup(window._auth, provider);
+      await processGoogleResult(result);
     }
-    loggedInTeacherEmail = email;
-    loggedInTeacherName  = name;
-    teacherName = name;
-    document.getElementById('teacherLoginScreen').style.display='none';
-    document.getElementById('appScreen').style.display='block';
-    applyRole();
   } catch(e){ console.log('خطأ في تسجيل الدخول', e); }
 }
+
+async function processGoogleResult(result){
+  if(!result) return;
+  const email = result.user.email;
+  const name  = result.user.displayName;
+  const allowed = allowedTeacherEmails.length === 0 || allowedTeacherEmails.includes(email);
+  if(!allowed){
+    document.getElementById('googleLoginError').style.display='block';
+    await window._signOut(window._auth);
+    return;
+  }
+  loggedInTeacherEmail = email;
+  loggedInTeacherName  = name;
+  teacherName = name;
+  await loadFromCloud();
+  document.getElementById('teacherLoginScreen').style.display='none';
+  document.getElementById('codeScreen').style.display='none';
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('appScreen').style.display='block';
+  applyRole();
+}
+
+// التحقق من الـ redirect بعد العودة من Google
+async function checkRedirectResult(){
+  const waitFirebase = () => new Promise(res => {
+    if(window._firebaseReady) res();
+    else window.addEventListener('firebaseReady', res, {once:true});
+  });
+  await waitFirebase();
+  try {
+    const result = await window._getRedirectResult(window._auth);
+    if(result && result.user){
+      await loadFromCloud();
+      await processGoogleResult(result);
+    }
+  } catch(e){ console.log('خطأ redirect', e); }
+}
+checkRedirectResult();
 async function loadFromCloud(){
   const waitFirebase = () => new Promise(res => {
     if(window._firebaseReady) res();
