@@ -261,7 +261,6 @@ async function checkPass(){
     await loadAdminPass();
   }
   if(!ADMIN_PASS){
-    // لا توجد كلمة مرور — اعرض شاشة الإعداد
     document.getElementById('loginScreen').style.display  = 'none';
     document.getElementById('setupScreen').style.display  = 'flex';
     return;
@@ -446,10 +445,9 @@ function deleteSubject(sub){
 
 // ============ INIT ============
 // حمّل كلمة المرور عند فتح الصفحة
-waitFb().then(async()=>{
+window.addEventListener('load', async()=>{
   await loadAdminPass();
   if(!ADMIN_PASS){
-    // أول مرة — اعرض شاشة الإعداد مباشرة
     document.getElementById('loginScreen').style.display  = 'none';
     document.getElementById('setupScreen').style.display  = 'flex';
   }
