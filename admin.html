@@ -377,9 +377,11 @@ async function saveAll(){
 
 // ============ TABS ============
 function switchTab(id, el){
-  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>{s.classList.remove('active');s.style.display='none';});
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('sec-'+id).classList.add('active');
+  const sec = document.getElementById('sec-'+id);
+  sec.classList.add('active');
+  sec.style.display = 'block';
   el.classList.add('active');
 }
 
@@ -479,8 +481,11 @@ window.addEventListener('load', async()=>{
 function goToPassword(){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('sec-password').classList.add('active');
-  document.querySelectorAll('.tab')[2].classList.add('active');
+  const sec = document.getElementById('sec-password');
+  sec.classList.add('active');
+  sec.style.display = 'block';
+  const tabs = document.querySelectorAll('.tab');
+  if(tabs[2]) tabs[2].classList.add('active');
 }
 
 // ============ CHANGE PASSWORD ============
