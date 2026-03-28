@@ -1,4 +1,4 @@
-[<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8"/>
@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json"/>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -37,6 +37,10 @@ window._signOut            = signOut;
 window._doc                = doc;
 window._getDoc             = getDoc;
 window._setDoc             = setDoc;
+window._collection         = collection;
+window._getDocs            = getDocs;
+window._query              = query;
+window._where              = where;
 window._firebaseReady      = true;
 window.dispatchEvent(new Event('firebaseReady'));
 </script>
@@ -44,7 +48,20 @@ window.dispatchEvent(new Event('firebaseReady'));
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{font-family:'Inter','Segoe UI',sans-serif;background:#212121;color:#f8fafc;direction:rtl;min-height:100vh;overflow-x:hidden}
 
-/* ===== CODE SCREEN ===== */
+/* ===== SCHOOL SELECTOR (NEW) ===== */
+#schoolSelectorScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:28px;background:linear-gradient(135deg,#1a1a1a 0%,#1a1a1a 60%,#111111 100%)}
+.school-logo{font-size:60px;margin-bottom:12px}
+.school-title{font-size:22px;font-weight:900;margin-bottom:6px}
+.school-sub{font-size:13px;opacity:.45;margin-bottom:30px;text-align:center}
+.school-list{width:100%;max-width:340px;display:flex;flex-direction:column;gap:10px;max-height:50vh;overflow-y:auto;padding-bottom:20px}
+.school-card{background:rgba(255,255,255,0.04);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:16px;text-align:center;cursor:pointer;transition:all .25s;display:flex;align-items:center;gap:12px}
+.school-card:hover,.school-card.active{border-color:#d4956a;background:linear-gradient(135deg,#cc785c12,#d4956a28)}
+.school-icon{font-size:24px;background:#2a2a2a;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.school-name{flex:1;font-weight:700;font-size:14px;text-align:right}
+.code-input-wrap{width:100%;max-width:340px;position:relative;margin-bottom:16px;display:none}
+.code-input{width:100%;padding:16px 20px;border-radius:8px;border:2px solid rgba(217,119,6,0.3);background:rgba(255,255,255,0.04);backdrop-filter:blur(10px);color:#f8fafc;font-size:22px;font-weight:800;text-align:center;outline:none;font-family:inherit;letter-spacing:4px;direction:ltr}
+.code-input:focus{border-color:#d4956a}
+.btn-small{font-size:12px;color:#9a9a9a;margin-top:15px;cursor:pointer;text-decoration:underline}
 
 /* ===== CODE SCREEN ===== */
 #codeScreen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:28px;background:linear-gradient(135deg,#1a1a1a 0%,#1a1a1a 60%,#111111 100%)}
@@ -65,7 +82,7 @@ body{font-family:'Inter','Segoe UI',sans-serif;background:#212121;color:#f8fafc;
 .copy-hint{font-size:10px;opacity:.45;margin-top:3px}
 
 /* ======= LOGIN ======= */
-#loginScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:28px;background:linear-gradient(135deg,#1a1a1a 0%,#1a1a1a 60%,#111111 100%)}
+#loginScreen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:28px;background:linear-gradient(135deg,#1a1a1a 0%,#1a1a1a 60%,#111111 100%)}
 .login-logo{font-size:72px;margin-bottom:12px;animation:pop .5s ease}
 @keyframes pop{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
 .login-title{font-size:26px;font-weight:900;margin-bottom:4px;letter-spacing:.5px}
@@ -240,20 +257,35 @@ footer{text-align:center;opacity:.2;font-size:11px;padding:16px 0 50px}
 .welcome-footer{padding:16px 24px 24px;display:flex;gap:10px}
 .w-skip{flex:1;padding:11px;border-radius:8px;border:1px solid #2f2f2f;background:transparent;color:#666;font-size:13px;cursor:pointer;font-family:inherit}
 .w-next{flex:2;padding:11px;border-radius:8px;border:none;background:linear-gradient(135deg,#cc785c,#e8a87c);color:#000;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit}
-.admin-corner{position:fixed;bottom:18px;left:18px;z-index:999;opacity:.25;transition:opacity .3s;cursor:pointer;text-decoration:none}
-.admin-corner:hover{opacity:1}
-.admin-corner-btn{width:38px;height:38px;border-radius:50%;background:#2a2a2a;border:1px solid #3a3a3a;display:flex;align-items:center;justify-content:center;font-size:18px;transition:all .3s}
-.admin-corner:hover .admin-corner-btn{background:linear-gradient(135deg,#cc785c,#e8a87c);border-color:transparent;transform:scale(1.1)}
+
 .hidden{display:none!important}
 @media(max-width:380px){.students-grid{grid-template-columns:1fr}.status-btns{gap:3px}.s-btn{padding:5px 6px;font-size:10px}}
 </style>
 </head>
 <body>
 
+<!-- ========== SCHOOL SELECTOR (NEW) ========== -->
+<div id="schoolSelectorScreen">
+  <div class="school-logo">🏫</div>
+  <div class="school-title">اختر مدرستك</div>
+  <div class="school-sub">مرحباً بك في منصة المدارس</div>
+  
+  <div id="schoolList" class="school-list">
+    <div style="text-align:center;opacity:.5;padding:20px">جاري تحميل المدارس...</div>
+  </div>
+
+  <div class="code-input-wrap" id="schoolCodeWrap">
+    <input class="code-input" id="schoolCodeInput" placeholder="كود المدرسة" maxlength="6"/>
+  </div>
+  
+  <button class="code-btn" id="selectSchoolBtn" style="display:none" onclick="submitSchoolCode()">تأكيد</button>
+  <div class="btn-small" onclick="showSchoolCodeInput()">لدي كود مدرسة؟</div>
+</div>
+
 <!-- ========== LOGIN ========== -->
 <div id="loginScreen">
   <div class="login-logo">🏫</div>
-  <div class="login-title">بوابة المدرسة</div>
+  <div class="login-title" id="loginSchoolName">بوابة المدرسة</div>
   <div class="login-sub">مدرسة ابن معتم</div>
   <div class="role-cards">
     <div class="role-card" id="rc-parent" onclick="selectRole('parent')">
@@ -440,44 +472,128 @@ footer{text-align:center;opacity:.2;font-size:11px;padding:16px 0 50px}
 </div>
 
 <script>
-// ============ DATA ============
+// ============ GLOBAL VARS ============
 let role = 'teacher';
 let activePage = '';
 let activeParentStudent = 0;
+let schoolID = null; // NEW: ID of the selected school
+let schoolName = 'مدرسة ابن المعتم';
 
 // قائمة Gmail المسموح بها للمدرسين — أضف Gmail كل مدرس هنا
-let allowedTeacherEmails = ['pqow4ieuryt@gmail.com'];
+let allowedTeacherEmails = [];
 let loggedInTeacherEmail = '';
 let loggedInTeacherName  = '';
 
 const students = [];
-let parentStudentIndex = 0; // which student the parent is viewing
+let parentStudentIndex = 0; 
 
 let gradesDB = {};
-
 let attendDB = [];
-
 let todayAttend = [];
-
 let announcements = [];
-
 let homework = [];
 
-// Firebase replaces JSONBin
-
-let schoolName = 'مدرسة ابن المعتم';
 let parentName  = '';
 let teacherName = '';
 let teacherSubject = '';
-
-// students already defined above, teachers per subject:
-let teachers = {
-  };
-
-// كود سري لكل مادة — يعرفه مدرسها بس
+let teachers = {};
 let subjectCodes = {};
-// المواد المفتوحة في هذه الجلسة
 let unlockedSubjects = {};
+
+// ============ INIT ============
+window.addEventListener('load', async()=>{
+  // Check if school ID is saved in session
+  const savedSchoolID = sessionStorage.getItem('activeSchoolID');
+  if(savedSchoolID){
+    schoolID = savedSchoolID;
+    await loadSchoolName();
+    document.getElementById('schoolSelectorScreen').style.display='none';
+    document.getElementById('loginScreen').style.display='flex';
+    document.getElementById('loginSchoolName').textContent = schoolName;
+  } else {
+    loadSchoolsList();
+  }
+  setTimeout(showWelcome, 800);
+});
+
+// ============ SCHOOL SELECTOR ============
+async function loadSchoolsList(){
+  const waitFirebase = () => new Promise(res => {
+    if(window._firebaseReady) res();
+    else window.addEventListener('firebaseReady', res, {once:true});
+  });
+  await waitFirebase();
+  try {
+    // Load public list of schools
+    const snap = await window._getDoc(window._doc(window._db, 'platformConfig', 'schools'));
+    const listEl = document.getElementById('schoolList');
+    listEl.innerHTML = '';
+    
+    if(snap.exists() && snap.data().list && snap.data().list.length > 0){
+      snap.data().list.forEach(s => {
+        const div = document.createElement('div');
+        div.className = 'school-card';
+        div.innerHTML = `<div class="school-icon">🏫</div><div class="school-name">${s.name}</div><div style="font-size:10px;color:#666">اختر</div>`;
+        div.onclick = () => selectSchool(s.id, s.name);
+        listEl.appendChild(div);
+      });
+    } else {
+      listEl.innerHTML = '<div style="text-align:center;opacity:.5;padding:20px">لا توجد مدارس مسجلة حالياً</div>';
+    }
+  } catch(e){
+    console.error(e);
+    document.getElementById('schoolList').innerHTML = '<div style="text-align:center;opacity:.5;padding:20px">خطأ في تحميل القائمة</div>';
+  }
+}
+
+function showSchoolCodeInput(){
+  document.getElementById('schoolList').style.display='none';
+  document.getElementById('schoolCodeWrap').style.display='block';
+  document.getElementById('selectSchoolBtn').style.display='block';
+}
+
+async function submitSchoolCode(){
+  const code = document.getElementById('schoolCodeInput').value.trim();
+  if(!code) return;
+  // Simple logic: assume code = schoolID for now, or search by code in future
+  // For now, let's try to fetch by ID directly (if code is ID) or we can search
+  // To keep it simple: We will treat the code as the School ID
+  // In a real app, you'd query a collection to find school by code.
+  
+  // Let's try to fetch the school doc directly with the code as ID
+  try {
+    const snap = await window._getDoc(window._doc(window._db, 'schools', code));
+    if(snap.exists()){
+      selectSchool(code, snap.data().name);
+    } else {
+      toast('❌ كود المدرسة غير صحيح');
+    }
+  } catch(e){
+    toast('❌ خطأ في البحث');
+  }
+}
+
+async function selectSchool(id, name){
+  schoolID = id;
+  schoolName = name;
+  sessionStorage.setItem('activeSchoolID', id);
+  sessionStorage.setItem('activeSchoolName', name);
+  
+  document.getElementById('schoolSelectorScreen').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('loginSchoolName').textContent = name;
+  document.getElementById('sb-schoolname').textContent = '🏫 ' + name;
+}
+
+async function loadSchoolName(){
+  if(!schoolID) return;
+  try {
+    const snap = await window._getDoc(window._doc(window._db, 'schools', schoolID));
+    if(snap.exists()){
+      schoolName = snap.data().name;
+    }
+  } catch(e){}
+}
 
 // ============ NAV CONFIG ============
 const parentNav = [
@@ -507,14 +623,11 @@ async function enterApp(){
     document.getElementById('codeScreen').style.display='flex';
     document.getElementById('codeInput').value='';
     document.getElementById('codeError').classList.remove('show');
-    // حمّل البيانات بالخلفية
     loadFromCloud().catch(()=>{});
   } else {
-    // مدرس — انتقل فوراً لشاشة Google
     document.getElementById('loginScreen').style.display='none';
     document.getElementById('teacherLoginScreen').style.display='flex';
     document.getElementById('googleLoginError').style.display='none';
-    // حمّل البيانات بالخلفية
     loadFromCloud().catch(()=>{});
   }
 }
@@ -539,8 +652,8 @@ async function processGoogleResult(result){
   if(!result) return;
   const email = result.user.email;
   const name  = result.user.displayName;
-  // حمّل البيانات أولاً حتى تكون allowedTeacherEmails محدّثة
   await loadFromCloud();
+  // CHECK ALLOWED EMAILS FOR THIS SCHOOL
   const allowed = allowedTeacherEmails.length === 0 || allowedTeacherEmails.includes(email);
   if(!allowed){
     document.getElementById('googleLoginError').style.display='block';
@@ -557,7 +670,6 @@ async function processGoogleResult(result){
   applyRole();
 }
 
-// التحقق من الـ redirect بعد العودة من Google
 async function checkRedirectResult(){
   const waitFirebase = () => new Promise(res => {
     if(window._firebaseReady) res();
@@ -573,14 +685,18 @@ async function checkRedirectResult(){
   } catch(e){ console.log('خطأ redirect', e); }
 }
 checkRedirectResult();
+
+// ============ DATA OPS (UPDATED FOR MULTI-SCHOOL) ============
 async function loadFromCloud(){
+  if(!schoolID) return; // Must select school first
   const waitFirebase = () => new Promise(res => {
     if(window._firebaseReady) res();
     else window.addEventListener('firebaseReady', res, {once:true});
   });
   await waitFirebase();
   try {
-    const snap = await window._getDoc(window._doc(window._db, 'school', 'data'));
+    // NEW PATH: schools/{schoolID}
+    const snap = await window._getDoc(window._doc(window._db, 'schools', schoolID));
     if(snap.exists()){
       const d = snap.data();
       if(d.students)             students.splice(0, students.length, ...d.students);
@@ -590,13 +706,37 @@ async function loadFromCloud(){
       if(d.subjectCodes)         Object.assign(subjectCodes, d.subjectCodes);
       if(d.allowedTeacherEmails) allowedTeacherEmails.splice(0, allowedTeacherEmails.length, ...d.allowedTeacherEmails);
       if(d.attendDB)             attendDB.splice(0, attendDB.length, ...d.attendDB);
-      // استرجع حضور اليوم من السجل المحفوظ
+      if(d.teachers)             Object.assign(teachers, d.teachers);
+      
       const todayKey = getTodayDate();
       const todayRec = attendDB.find(a => a.date === todayKey);
       todayAttend = todayRec ? [...todayRec.statuses] : students.map(()=>'حاضر');
     }
   } catch(e){ console.log('خطأ في التحميل', e); }
 }
+
+async function saveToCloud(){
+  if(!schoolID) return;
+  const waitFirebase = () => new Promise(res => {
+    if(window._firebaseReady) res();
+    else window.addEventListener('firebaseReady', res, {once:true});
+  });
+  await waitFirebase();
+  try {
+    const data = { 
+      name: schoolName, // Save name too
+      students, grades:gradesDB, homework, announcements, 
+      subjectCodes, allowedTeacherEmails, attendDB, teachers 
+    };
+    // NEW PATH: schools/{schoolID}
+    await window._setDoc(window._doc(window._db, 'schools', schoolID), data);
+    toast('☁️ تم الحفظ على Firebase');
+  } catch(e){
+    console.error(e);
+    toast('❌ فشل الحفظ');
+  }
+}
+
 function submitCode(){
   const code = document.getElementById('codeInput').value.trim();
   const idx = students.findIndex(s => s.code === code);
@@ -669,11 +809,9 @@ function closeSidebar(){
 // ============ NAVIGATE ============
 function navigateTo(id){
   activePage=id;
-  // highlight nav
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
   const ni=document.getElementById('nav-'+id);
   if(ni) ni.classList.add('active');
-  // render page
   const mc=document.getElementById('mainContent');
   mc.innerHTML='';
   if(id==='p-grades')   mc.innerHTML=renderParentGrades();
@@ -718,8 +856,6 @@ function renderParentGrades(){
     const r2f = getR2(sub).final ?? 0;
     const c1  = r1f > 0 ? gradeColor(r1f) : '#555';
     const c2  = r2f > 0 ? gradeColor(r2f) : '#555';
-    const best = r1f > 0 && r2f > 0 ? Math.max(r1f, r2f) : (r1f || r2f);
-    const bc  = best > 0 ? gradeColor(best) : '#555';
     return `<tr style="border-bottom:1px solid #2a2a2a">
       <td style="text-align:center;color:#8a8a8a;font-size:11px;padding:10px 5px">${idx+1}</td>
       <td style="font-weight:600;font-size:13px;padding:10px 8px">${sub}</td>
@@ -735,7 +871,6 @@ function renderParentGrades(){
     </tr>`;
   }).join('');
 
-  // overall stats
   const r1finals = subjects.map(sub => getR1(sub).final ?? 0).filter(v=>v>0);
   const r2finals = subjects.map(sub => getR2(sub).final ?? 0).filter(v=>v>0);
   const avg1 = r1finals.length ? Math.round(r1finals.reduce((a,b)=>a+b,0)/r1finals.length) : 0;
@@ -763,29 +898,14 @@ function renderParentGrades(){
             <th style="padding:10px 5px;font-size:10px;color:#8a8a8a;text-align:center;width:28px">#</th>
             <th style="padding:10px 8px;font-size:12px;color:#ececec;text-align:right">المادة</th>
             <th style="padding:10px 5px;font-size:11px;color:#ececec;text-align:center">المدرس</th>
-            <th style="padding:10px 8px;font-size:11px;color:#34d399;text-align:center">📘 الدور الأول<br/><span style="font-size:9px;opacity:.6">/100</span></th>
-            <th style="padding:10px 8px;font-size:11px;color:#f472b6;text-align:center">📗 الدور الثاني<br/><span style="font-size:9px;opacity:.6">/100</span></th>
+            <th style="padding:10px 8px;font-size:11px;color:#34d399;text-align:center">📘 الدور الأول</th>
+            <th style="padding:10px 8px;font-size:11px;color:#f472b6;text-align:center">📗 الدور الثاني</th>
           </tr>
         </thead>
         <tbody>${rows||`<tr><td colspan="5" style="text-align:center;padding:24px;opacity:.4">لا توجد درجات بعد</td></tr>`}</tbody>
       </table>
     </div>
-    <div style="padding:10px 16px;border-top:1px solid #2e2e2e;display:flex;justify-content:space-between;font-size:11px;color:#8a8a8a">
-      <span>المدرس: ${teacherName}</span>
-      <span>مدير المدرسة: ............</span>
-    </div>
   </div>`;
-}
-function calcAvg(){
-  const subjects=Object.keys(gradesDB);
-  if(!subjects.length) return '0%';
-  const finals=subjects.map(sub=>(gradesDB[sub][activeParentStudent]?.r1?.final??0)).filter(v=>v>0);
-  return finals.length ? Math.round(finals.reduce((a,b)=>a+b,0)/finals.length)+'%' : '0%';
-}
-function calcBest(){
-  const subjects=Object.keys(gradesDB);
-  if(!subjects.length) return 0;
-  return Math.max(...subjects.map(sub=>gradesDB[sub][activeParentStudent]?.r1?.final??0));
 }
 
 function renderParentAttend(){
@@ -832,7 +952,7 @@ function renderParentHw(){
 }
 
 // ============ TEACHER PAGES ============
-let activeRound = 1; // which round tab is shown
+let activeRound = 1; 
 
 function renderTGrades(){
   const subList = Object.keys(gradesDB);
@@ -841,8 +961,6 @@ function renderTGrades(){
     <span style="font-size:12px;margin-top:6px;display:block">اذهب إلى ⚙️ الإعدادات وأضف المواد وأسماء المدرسين أولاً</span>
   </div>`;
   const subOpts = subList.map(s=>`<option value="${s}">${s}${teachers[s]?' — '+teachers[s]:''}</option>`).join('');
-
-
 
   return `<div class="stats-grid">
     <div class="stat"><div class="stat-icon">👦</div><div class="stat-val" style="color:#e8a87c">${students.length}</div><div class="stat-lbl">طلاب</div></div>
@@ -855,11 +973,7 @@ function renderTGrades(){
       <label class="form-label">اختر المادة</label>
       <select class="form-select" id="tSubject" onchange="onSubjectChange()">${subOpts}</select>
     </div>
-
-    <!-- قفل المادة -->
     <div id="subjectLockBox"></div>
-
-    <!-- Round Tabs -->
     <div id="roundTabsWrap" style="display:none">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
       <button id="tab_r1" onclick="switchRoundTab(1)"
@@ -871,8 +985,6 @@ function renderTGrades(){
         📗 الدور الثاني
       </button>
     </div>
-
-    <!-- Round 1 -->
     <div id="round1_section">
       <div style="background:#34d39911;border:1px solid #34d39933;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#34d399;font-weight:700">
         📘 الدور الأول — اليومي + شهري (٣ امتحانات) + نصف السنة + المعدل النهائي
@@ -900,8 +1012,6 @@ function renderTGrades(){
         </div>
       </div>`).join('')}
     </div>
-
-    <!-- Round 2 -->
     <div id="round2_section" style="display:none">
       <div style="background:#f472b611;border:1px solid #f472b633;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#f472b6;font-weight:700">
         📗 الدور الثاني — اليومي + شهري (٣ امتحانات) + آخر السنة + المعدل النهائي
@@ -929,9 +1039,8 @@ function renderTGrades(){
         </div>
       </div>`).join('')}
     </div>
-
     <button class="btn-success" onclick="saveGrades()">💾 حفظ الدرجات</button>
-    </div><!-- end roundTabsWrap -->
+    </div>
   </div>`;
 }
 
@@ -1085,7 +1194,6 @@ function getTodayDate(){
   return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
 }
 function renderTAttend(){
-  // استرجع حضور اليوم من السجل المحفوظ إن وجد
   const todayRecord = attendDB.find(a => a.date === getTodayDate());
   if(todayRecord) todayAttend = [...todayRecord.statuses];
   else if(todayAttend.length !== students.length)
@@ -1244,9 +1352,9 @@ function renderTeacherSettings(){
     <div class="section-title">🏫 إعدادات المدرسة</div>
     <div class="form-group">
       <label class="form-label">اسم المدرسة</label>
-      <input class="form-input" id="set_school" value="${schoolName}"/>
+      <input class="form-input" id="set_school" value="${schoolName}" readonly style="opacity:.7"/>
     </div>
-    <button class="btn-success" onclick="saveSchool()">💾 حفظ اسم المدرسة</button>
+    <button class="btn-success" onclick="saveSchoolNameOnly()">💾 حفظ اسم المدرسة</button>
   </div>
 
   <div class="card" style="padding:18px;margin-bottom:12px">
@@ -1295,11 +1403,9 @@ function renderTeacherSettings(){
     <button class="btn-success" onclick="saveTeachers()">💾 حفظ أسماء المعلمين</button>
   </div>
 
-
-
   <div class="card" style="padding:18px;margin-bottom:12px">
     <div class="section-title">🔑 أكواد المواد السرية</div>
-    <div style="font-size:12px;opacity:.5;margin-bottom:14px">شارك كود كل مادة مع مدرسها فقط — الكود يحمي درجات المادة من التعديل</div>
+    <div style="font-size:12px;opacity:.5;margin-bottom:14px">شارك كود كل مادة مع مدرسها فقط</div>
     ${Object.keys(gradesDB).length === 0
       ? `<div style="text-align:center;opacity:.4;padding:16px;font-size:13px">لا توجد مواد مضافة بعد</div>`
       : Object.keys(gradesDB).map(sub => `
@@ -1317,18 +1423,18 @@ function renderTeacherSettings(){
   </div>`;
 }
 
-
-function saveSchool(){
-  schoolName = document.getElementById('set_school').value.trim() || schoolName;
-  document.getElementById('sb-schoolname').textContent = '🏫 '+schoolName;
-  document.getElementById('footerTxt').textContent = schoolName+' • بوابة المدرسة ٢٠٢٦';
+function saveSchoolNameOnly(){
+  // School name is already saved in the main doc
   toast('✅ تم حفظ اسم المدرسة');
+  saveToCloud();
 }
+
 function saveParent(){
   parentName = document.getElementById('set_parent').value.trim() || parentName;
   if(role==='parent'){ document.getElementById('sb-name').textContent=parentName; document.getElementById('sb-avatar').textContent=parentName.charAt(0); document.getElementById('h-avatar').textContent=parentName.charAt(0); }
   toast('✅ تم حفظ اسم ولي الأمر');
 }
+
 function saveTeacher(){
   teacherName    = document.getElementById('set_teacher').value.trim()  || teacherName;
   teacherSubject = document.getElementById('set_tsubject').value.trim() || teacherSubject;
@@ -1336,11 +1442,6 @@ function saveTeacher(){
   toast('✅ تم حفظ بيانات المدرس');
 }
 
-async function saveToCloud(){
-  const data = { students, grades:gradesDB, homework, announcements, subjectCodes, allowedTeacherEmails, attendDB };
-  await window._setDoc(window._doc(window._db, 'school', 'data'), data);
-  toast('☁️ تم الحفظ على Firebase');
-}
 function saveStudents(){
   students.forEach((s,i)=>{
     const n=document.getElementById(`stu_${i}`)?.value.trim();
@@ -1362,7 +1463,6 @@ function addTeacher(){
   if(!subject) return;
   teachers[subject] = '';
   gradesDB[subject] = students.map(()=>({}));
-  // كود سري للمادة
   subjectCodes[subject] = Math.floor(1000 + Math.random() * 9000).toString();
   navigateTo(role==='parent'?'p-settings':'t-settings');
 }
@@ -1375,21 +1475,6 @@ function saveTeachers(){
   toast('✅ تم حفظ أسماء المعلمين');
 }
 
-function addEmail(){
-  const em = document.getElementById('newEmailInput')?.value.trim().toLowerCase();
-  if(!em || !em.includes('@')){ toast('⚠️ أدخل Gmail صحيح'); return; }
-  if(allowedTeacherEmails.includes(em)){ toast('⚠️ هذا الحساب موجود بالفعل'); return; }
-  allowedTeacherEmails.push(em);
-  toast('✅ تم إضافة ' + em);
-  saveToCloud();
-  navigateTo('t-settings');
-}
-function removeEmail(i){
-  allowedTeacherEmails.splice(i,1);
-  toast('🗑 تم الحذف');
-  saveToCloud();
-  navigateTo('t-settings');
-}
 function copyCode(code, btn){
   navigator.clipboard.writeText(code).catch(()=>{});
   const hint = document.getElementById('copied_'+code);
@@ -1412,8 +1497,6 @@ function switchWTab(id, el){
   el.classList.add('active');
   document.getElementById('wt-'+id).classList.add('active');
 }
-// اعرض التعليمات أول مرة فقط
-window.addEventListener('load', ()=>{ setTimeout(showWelcome, 800); });
 
 // ============ TOAST ============
 function toast(msg){
