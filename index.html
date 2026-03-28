@@ -382,9 +382,43 @@ footer{text-align:center;opacity:.2;font-size:11px;padding:16px 0 50px}
   <footer id="footerTxt" style="opacity:.25;font-size:11px;text-align:center;padding:16px 0 50px">مدارس الحكومة العراقية٢٠٢٦<br/><span style="opacity:.7">تطوير: عبد المللك مروان ياسين</span></footer>
 </div>
 
-<!-- ADMIN FLOATING BUTTONS (SCHOOL ADMIN ONLY) -->
+<!-- ADMIN FLOATING BUTTONS (SCHOOL ADMIN ONLY - Visible if user has role) -->
 <div class="admin-corner" id="schoolAdminBtn" style="display:none">
   <div class="admin-btn" onclick="openAdmin('school')" title="دخول مدير المدرسة">🏫</div>
+</div>
+
+<!-- WELCOME MODAL -->
+<div class="welcome-bg" id="welcomeModal" style="display:none">
+  <div class="welcome-box">
+    <div class="welcome-header">
+      <div class="welcome-icon">🏫</div>
+      <div class="welcome-title">أهلاً بك في منصة المدارس</div>
+      <div class="welcome-sub">دليل استخدام سريع</div>
+    </div>
+    <div class="welcome-tabs">
+      <div class="w-tab active" onclick="switchWTab('teacher',this)">👨‍🏫 المدرس</div>
+      <div class="w-tab" onclick="switchWTab('parent',this)">👨‍👩‍👧 ولي الأمر</div>
+    </div>
+    <div class="welcome-content">
+      <div class="w-section active" id="wt-teacher">
+        <div class="w-step"><div class="w-num">١</div><div class="w-text">اختر <strong>مدرستك</strong> من القائمة</div></div>
+        <div class="w-step"><div class="w-num">٢</div><div class="w-text">اختر <strong>مدرس</strong> واضغط دخول</div></div>
+        <div class="w-step"><div class="w-num">٣</div><div class="w-text">سجّل دخولك بـ <strong>حساب Gmail</strong></div></div>
+        <div class="w-step"><div class="w-num">٤</div><div class="w-text">من <strong>الإعدادات ⚙️</strong> أضف الطلاب والمواد</div></div>
+        <div class="w-step"><div class="w-num">٥</div><div class="w-text">أرسل <strong>كود الطالب</strong> لولي أمره</div></div>
+      </div>
+      <div class="w-section" id="wt-parent">
+        <div class="w-step"><div class="w-num">١</div><div class="w-text">اختر <strong>مدرسة ابنك</strong> من القائمة</div></div>
+        <div class="w-step"><div class="w-num">٢</div><div class="w-text">اختر <strong>ولي أمر</strong> واضغط دخول</div></div>
+        <div class="w-step"><div class="w-num">٣</div><div class="w-text">أدخل <strong>كود ابنك</strong> الذي أرسله المدرس</div></div>
+        <div class="w-step"><div class="w-num">٤</div><div class="w-text">تابع <strong>الدرجات والحضور والإعلانات</strong></div></div>
+      </div>
+    </div>
+    <div class="welcome-footer">
+      <button class="w-skip" onclick="closeWelcome()">تخطي</button>
+      <button class="w-next" onclick="closeWelcome()">فهمت ✅</button>
+    </div>
+  </div>
 </div>
 
 <!-- TOAST -->
@@ -404,7 +438,7 @@ let role = 'teacher';
 let activePage = '';
 let activeParentStudent = 0;
 let schoolID = null; 
-let schoolName = 'مدرسة ابن المعتم';
+let schoolName = 'مدرسة ابن معتم';
 
 let allowedTeacherEmails = [];
 let loggedInTeacherEmail = '';
@@ -463,6 +497,7 @@ async function loadSchoolName(){
     if(snap.exists()){
       schoolName = snap.data().name;
     } else {
+      // School not found
       alert('المدرسة غير موجودة');
       schoolID = null;
     }
@@ -1151,7 +1186,7 @@ function delAnn(i){ announcements.splice(i,1); saveToCloud(); navigateTo('t-anno
 
 function renderTHomework(){
   const list=homework.map((h,i)=>`
-    <div class="hw-item" style="border-right:4px solid ${h.urgent?'#ef4444':'#d4956a';display:flex;align-items:center;gap:10px">
+    <div class="hw-item" style="border-right:4px solid ${h.urgent?'#ef4444':'#d4956a'};display:flex;align-items:center;gap:10px">
       <div style="flex:1">
         <div class="hw-hdr"><span class="hw-sub">${h.subject}</span>
           <span class="hw-due ${h.urgent?'urgent':'normal'}">التسليم: ${h.due}</span></div>
@@ -1308,7 +1343,7 @@ function saveParent(){
 function saveTeacher(){
   teacherName    = document.getElementById('set_teacher').value.trim()  || teacherName;
   teacherSubject = document.getElementById('set_tsubject').value.trim() || teacherSubject;
-  if(role==='teacher'){ document.getElementById('sb-name').textContent=nerName; document.getElementById('sb-role').textContent=teacherSubject; document.getElementById('sb-avatar').textContent=teacherName.charAt(0); document.getElementById('h-avatar').textContent=teacherName.charAt(0); }
+  if(role==='teacher'){ document.getElementById('sb-name').textContent=teacherName; document.getElementById('sb-role').textContent=teacherSubject; document.getElementById('sb-avatar').textContent=teacherName.charAt(0); document.getElementById('h-avatar').textContent=teacherName.charAt(0); }
   toast('✅ تم حفظ بيانات المدرس');
 }
 
@@ -1385,7 +1420,7 @@ async function openAdmin(type){
 }
 
 function exitAdmin(){
-  document.getElementById('adminScreen').style.display='none';
+  document.getElementById('adminScreen').style.display = 'none';
   if(schoolID) {
     document.getElementById('loginScreen').style.display='flex';
   } else {
@@ -1456,7 +1491,7 @@ function renderAdminDashboard(superAdminMode){
         <div id="adminSubList"></div>
         <div style="margin-top:10px;display:flex;gap:10px">
            <input id="newSubName" class="admin-form" placeholder="المادة" style="flex:1"/>
-           <button onclick="addSubject()" class="admin-btn-full" style="width:auto">إضافة</button>
+           <button onclick="adminAddSubject()" class="admin-btn-full" style="width:auto">إضافة</button>
         </div>
       </div>
     `;
@@ -1481,11 +1516,11 @@ async function loadAdminSchoolList(){
           <div style="font-size:10px;opacity:.6">ID: ${s.id}</div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
-           <a href="${link}" target="_blank" style="color:var(--blue);font-size:10px;text-decoration:none">🔗 نسخ الرابط</a>
+           <a href="${link}" target="_blank" style="color:var(--blue);font-size:10px;text-decoration:none">🔗 فتح الرابط</a>
            <button onclick="adminDeleteSchool('${s.id}')" class="del-btn">🗑</button>
         </div>
       </div>
-    `).join('');
+    `}).join('');
   } else {
     list.innerHTML = '<div style="opacity:.5">لا توجد مدارس</div>';
   }
@@ -1561,7 +1596,7 @@ function renderAdminSubList(){
     </div>
   `).join('');
 }
-function addSubject(){
+function adminAddSubject(){
   const n = document.getElementById('newSubName').value;
   if(n && !gradesDB[n]){
     gradesDB[n] = students.map(()=>({}));
@@ -1586,6 +1621,24 @@ async function saveAdminData(){
 }
 
 // ============ HELPERS ============
+function showWelcome(){
+  if(!localStorage.getItem('welcomed')){
+    const modal = document.getElementById('welcomeModal');
+    if(modal) modal.style.display='flex';
+  }
+}
+function closeWelcome(){
+  const modal = document.getElementById('welcomeModal');
+  if(modal) modal.style.display='none';
+  localStorage.setItem('welcomed','1');
+}
+function switchWTab(id, el){
+  document.querySelectorAll('.w-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.w-section').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('wt-'+id).classList.add('active');
+}
+
 function toast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg; t.classList.add('show');
