@@ -220,6 +220,26 @@ body{font-family:'Inter','Segoe UI',sans-serif;background:#212121;color:#f8fafc;
 .i-close{background:none;border:none;color:#fff;font-size:18px;cursor:pointer}
 
 footer{text-align:center;opacity:.2;font-size:11px;padding:16px 0 50px}
+
+/* WELCOME MODAL */
+.welcome-bg{position:fixed;inset:0;background:#0009;z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
+.welcome-box{background:#1a1a1a;border:1px solid #2f2f2f;border-radius:16px;width:100%;max-width:400px;max-height:85vh;overflow-y:auto;direction:rtl}
+.welcome-header{padding:24px 24px 0;text-align:center}
+.welcome-icon{font-size:48px;margin-bottom:10px}
+.welcome-title{font-size:20px;font-weight:900;margin-bottom:4px}
+.welcome-sub{font-size:12px;opacity:.45;margin-bottom:20px}
+.welcome-tabs{display:flex;border-bottom:1px solid #2f2f2f;margin:0 24px}
+.w-tab{flex:1;padding:10px;text-align:center;font-size:13px;font-weight:700;color:#666;cursor:pointer;border-bottom:2px solid transparent;transition:.2s}
+.w-tab.active{color:#e8a87c;border-bottom-color:#e8a87c}
+.welcome-content{padding:20px 24px}
+.w-section{display:none}.w-section.active{display:block}
+.w-step{display:flex;gap:12px;margin-bottom:16px;align-items:flex-start}
+.w-num{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#cc785c,#e8a87c);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0;color:#000}
+.w-text{flex:1;font-size:13px;line-height:1.6;color:#ccc}
+.w-text strong{color:#e8a87c}
+.welcome-footer{padding:16px 24px 24px;display:flex;gap:10px}
+.w-skip{flex:1;padding:11px;border-radius:8px;border:1px solid #2f2f2f;background:transparent;color:#666;font-size:13px;cursor:pointer;font-family:inherit}
+.w-next{flex:2;padding:11px;border-radius:8px;border:none;background:linear-gradient(135deg,#cc785c,#e8a87c);color:#000;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit}
 .admin-corner{position:fixed;bottom:18px;left:18px;z-index:999;opacity:.25;transition:opacity .3s;cursor:pointer;text-decoration:none}
 .admin-corner:hover{opacity:1}
 .admin-corner-btn{width:38px;height:38px;border-radius:50%;background:#2a2a2a;border:1px solid #3a3a3a;display:flex;align-items:center;justify-content:center;font-size:18px;transition:all .3s}
@@ -332,6 +352,80 @@ footer{text-align:center;opacity:.2;font-size:11px;padding:16px 0 50px}
   <div class="main" id="mainContent"></div>
 
   <footer id="footerTxt" style="opacity:.25;font-size:11px;text-align:center;padding:16px 0 50px">مدارس الحكومة العراقية٢٠٢٦<br/><span style="opacity:.7">تطوير: عبد المللك مروان ياسين</span></footer>
+</div>
+
+<!-- WELCOME MODAL -->
+<div class="welcome-bg" id="welcomeModal" style="display:none">
+  <div class="welcome-box">
+    <div class="welcome-header">
+      <div class="welcome-icon">🏫</div>
+      <div class="welcome-title">أهلاً بك في بوابة المدرسة</div>
+      <div class="welcome-sub">دليل استخدام سريع</div>
+    </div>
+    <div class="welcome-tabs">
+      <div class="w-tab active" onclick="switchWTab('teacher',this)">👨‍🏫 المدرس</div>
+      <div class="w-tab" onclick="switchWTab('parent',this)">👨‍👩‍👧 ولي الأمر</div>
+    </div>
+    <div class="welcome-content">
+
+      <!-- TEACHER -->
+      <div class="w-section active" id="wt-teacher">
+        <div class="w-step">
+          <div class="w-num">١</div>
+          <div class="w-text">اختر <strong>مدرس</strong> من الصفحة الرئيسية ثم اضغط <strong>دخول</strong></div>
+        </div>
+        <div class="w-step">
+          <div class="w-num">٢</div>
+          <div class="w-text">سجّل دخولك بـ <strong>حساب Gmail</strong> الخاص بك</div>
+        </div>
+        <div class="w-step">
+          <div class="w-num">٣</div>
+          <div class="w-text">من <strong>الإعدادات ⚙️</strong> أضف أسماء الطلاب وأكوادهم</div>
+        </div>
+        <div class="w-step">
+          <div class="w-num">٤</div>
+          <div class="w-text">من <strong>إدخال الدرجات 📝</strong> أدخل درجات كل طالب واحفظ</div>
+        </div>
+        <div class="w-step">
+          <div class="w-num">٥</div>
+          <div class="w-text">من <strong>تسجيل الحضور 📅</strong> سجّل حضور الطلاب يومياً</div>
+        </div>
+        <div class="w-step">
+          <div class="w-num">٦</div>
+          <div class="w-text">أرسل <strong>كود كل طالب</strong> لولي أمره عبر واتساب</div>
+        </div>
+      </div>
+
+      <!-- PARENT -->
+      <div class="w-section" id="wt-parent">
+        <div class="w-step">
+          <div class="w-num">١</div>
+          <div class="w-text">اختر <strong>ولي أمر</strong> من الصفحة الرئيسية ثم اضغط <strong>دخول</strong></div>
+        </div>
+        <div class="w-step">
+          <div class="w-num">٢</div>
+          <div class="w-text">أدخل <strong>كود ابنك</strong> الذي أرسله لك المدرس</div>
+        </div>
+        <div class="w-step">
+          <div class="w-num">٣</div>
+          <div class="w-text">من <strong>الدرجات 🏆</strong> شاهد نتائج ابنك في كل المواد</div>
+        </div>
+        <div class="w-step">
+          <div class="w-num">٤</div>
+          <div class="w-text">من <strong>الحضور 📅</strong> تابع سجل حضور وغياب ابنك</div>
+        </div>
+        <div class="w-step">
+          <div class="w-num">٥</div>
+          <div class="w-text">من <strong>الأخبار 📢</strong> اطلع على آخر إعلانات المدرسة</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="welcome-footer">
+      <button class="w-skip" onclick="closeWelcome()">تخطي</button>
+      <button class="w-next" onclick="closeWelcome()">فهمت ✅</button>
+    </div>
+  </div>
 </div>
 
 <!-- TOAST -->
@@ -1201,22 +1295,7 @@ function renderTeacherSettings(){
     <button class="btn-success" onclick="saveTeachers()">💾 حفظ أسماء المعلمين</button>
   </div>
 
-  <div class="card" style="padding:18px;margin-bottom:12px">
-    <div class="section-title">📧 Gmail المسموح بها للمدرسين</div>
-    <div style="font-size:12px;opacity:.5;margin-bottom:14px">فقط هذه الحسابات تقدر تدخل كمدرس — اتركها فاضية للسماح للكل (وضع التجربة)</div>
-    <div id="emailList">
-      ${allowedTeacherEmails.map((em,i)=>`
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-        <div style="flex:1;background:#212121;border-radius:8px;padding:10px 12px;font-size:13px;color:#38bdf8">${em}</div>
-        <button class="del-btn" onclick="removeEmail(${i})">🗑</button>
-      </div>`).join('')}
-    </div>
-    <div style="display:flex;gap:8px;margin-top:8px">
-      <input class="form-input" id="newEmailInput" placeholder="example@gmail.com" style="flex:1;direction:ltr"/>
-      <button onclick="addEmail()" style="padding:10px 14px;border-radius:8px;border:none;background:linear-gradient(135deg,#0ea5e9,#06b6d4);color:#fff;font-weight:800;cursor:pointer;font-family:inherit;font-size:13px">➕ إضافة</button>
-    </div>
-    ${loggedInTeacherEmail ? `<div style="margin-top:10px;font-size:11px;opacity:.5">أنت مسجل الآن بـ: ${loggedInTeacherEmail}</div>` : ''}
-  </div>
+
 
   <div class="card" style="padding:18px;margin-bottom:12px">
     <div class="section-title">🔑 أكواد المواد السرية</div>
@@ -1316,6 +1395,25 @@ function copyCode(code, btn){
   const hint = document.getElementById('copied_'+code);
   if(hint){ hint.textContent='✅ تم النسخ!'; setTimeout(()=>hint.textContent='اضغط للنسخ',2000); }
 }
+
+// ============ WELCOME ============
+function showWelcome(){
+  if(!localStorage.getItem('welcomed')){
+    document.getElementById('welcomeModal').style.display='flex';
+  }
+}
+function closeWelcome(){
+  document.getElementById('welcomeModal').style.display='none';
+  localStorage.setItem('welcomed','1');
+}
+function switchWTab(id, el){
+  document.querySelectorAll('.w-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.w-section').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('wt-'+id).classList.add('active');
+}
+// اعرض التعليمات أول مرة فقط
+window.addEventListener('load', ()=>{ setTimeout(showWelcome, 800); });
 
 // ============ TOAST ============
 function toast(msg){
