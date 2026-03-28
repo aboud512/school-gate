@@ -1,18 +1,15 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
-<title>بوابة المدرسة</title>
-<meta name="theme-color" content="#cc785c"/>
-<meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<meta name="apple-mobile-web-app-title" content="بوابة المدرسة"/>
-<link rel="manifest" href="manifest.json"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>لوحة تحكم المدير</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+
+<!-- Firebase -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, deleteDoc, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC_bKThc6ZLaAXOo6jhm74AWDUYvX2Wi5w",
@@ -25,1500 +22,820 @@ const firebaseConfig = {
 
 const fbApp = initializeApp(firebaseConfig);
 const db    = getFirestore(fbApp);
-const auth  = getAuth(fbApp);
 
-window._db   = db;
-window._auth = auth;
-window._GoogleAuthProvider = GoogleAuthProvider;
-window._signInWithPopup    = signInWithPopup;
-window._signInWithRedirect  = signInWithRedirect;
-window._getRedirectResult   = getRedirectResult;
-window._signOut            = signOut;
-window._doc                = doc;
-window._getDoc             = getDoc;
-window._setDoc             = setDoc;
-window._collection         = collection;
-window._getDocs            = getDocs;
-window._query              = query;
-window._where              = where;
-window._firebaseReady      = true;
-window.dispatchEvent(new Event('firebaseReady'));
+window._db        = db;
+window._doc       = doc;
+window._getDoc    = getDoc;
+window._setDoc    = setDoc;
+window._collection = collection;
+window._getDocs   = getDocs;
+window._deleteDoc = deleteDoc;
+window._updateDoc = updateDoc;
+window._arrayUnion = arrayUnion;
+window._arrayRemove = arrayRemove;
+window._fbReady   = true;
+window.dispatchEvent(new Event('fbReady'));
 </script>
+
 <style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{font-family:'Inter','Segoe UI',sans-serif;background:#212121;color:#f8fafc;direction:rtl;min-height:100vh;overflow-x:hidden}
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f0f0f;
+  --surface:#1a1a1a;
+  --surface2:#222;
+  --border:#2e2e2e;
+  --accent:#e8854a;
+  --accent2:#f5a623;
+  --green:#22c55e;
+  --red:#ef4444;
+  --blue:#38bdf8;
+  --text:#f0f0f0;
+  --muted:#666;
+}
+body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl}
 
-/* ===== SCHOOL SELECTOR (NEW) ===== */
-#schoolSelectorScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:28px;background:linear-gradient(135deg,#1a1a1a 0%,#1a1a1a 60%,#111111 100%)}
-.school-logo{font-size:60px;margin-bottom:12px}
-.school-title{font-size:22px;font-weight:900;margin-bottom:6px}
-.school-sub{font-size:13px;opacity:.45;margin-bottom:30px;text-align:center}
-.school-list{width:100%;max-width:340px;display:flex;flex-direction:column;gap:10px;max-height:50vh;overflow-y:auto;padding-bottom:20px}
-.school-card{background:rgba(255,255,255,0.04);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:16px;text-align:center;cursor:pointer;transition:all .25s;display:flex;align-items:center;gap:12px}
-.school-card:hover,.school-card.active{border-color:#d4956a;background:linear-gradient(135deg,#cc785c12,#d4956a28)}
-.school-icon{font-size:24px;background:#2a2a2a;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center}
-.school-name{flex:1;font-weight:700;font-size:14px;text-align:right}
-.code-input-wrap{width:100%;max-width:340px;position:relative;margin-bottom:16px;display:none}
-.code-input{width:100%;padding:16px 20px;border-radius:8px;border:2px solid rgba(217,119,6,0.3);background:rgba(255,255,255,0.04);backdrop-filter:blur(10px);color:#f8fafc;font-size:22px;font-weight:800;text-align:center;outline:none;font-family:inherit;letter-spacing:4px;direction:ltr}
-.code-input:focus{border-color:#d4956a}
-.btn-small{font-size:12px;color:#9a9a9a;margin-top:15px;cursor:pointer;text-decoration:underline}
-
-/* ===== CODE SCREEN ===== */
-#codeScreen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:28px;background:linear-gradient(135deg,#1a1a1a 0%,#1a1a1a 60%,#111111 100%)}
-.code-logo{font-size:60px;margin-bottom:12px}
-.code-title{font-size:22px;font-weight:900;margin-bottom:6px}
-.code-sub{font-size:13px;opacity:.45;margin-bottom:30px;text-align:center}
-.code-input-wrap{width:100%;max-width:340px;position:relative;margin-bottom:16px}
-.code-input{width:100%;padding:16px 20px;border-radius:8px;border:2px solid rgba(217,119,6,0.3);background:rgba(255,255,255,0.04);backdrop-filter:blur(10px);color:#f8fafc;font-size:22px;font-weight:800;text-align:center;outline:none;font-family:inherit;letter-spacing:6px;direction:ltr}
-.code-input:focus{border-color:#d4956a}
-.code-btn{width:100%;max-width:340px;padding:15px;border-radius:8px;border:none;background:linear-gradient(135deg,#cc785c,#e8a87c);color:#fff;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:12px}
-.code-back{background:none;border:none;color:#9a9a9a;font-size:13px;cursor:pointer;font-family:inherit;text-decoration:underline}
-.code-error{color:#ef4444;font-size:13px;margin-bottom:10px;display:none}
-.code-error.show{display:block}
-
-/* code badge in teacher settings */
-.code-badge{display:inline-block;background:linear-gradient(135deg,#cc785c,#e8a87c);color:#fff;padding:4px 12px;border-radius:8px;font-weight:800;font-size:14px;letter-spacing:3px;cursor:pointer;transition:transform .15s}
-.code-badge:hover{transform:scale(1.05)}
-.copy-hint{font-size:10px;opacity:.45;margin-top:3px}
-
-/* ======= LOGIN ======= */
-#loginScreen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:28px;background:linear-gradient(135deg,#1a1a1a 0%,#1a1a1a 60%,#111111 100%)}
-.login-logo{font-size:72px;margin-bottom:12px;animation:pop .5s ease}
-@keyframes pop{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
-.login-title{font-size:26px;font-weight:900;margin-bottom:4px;letter-spacing:.5px}
-.login-sub{font-size:14px;opacity:.45;margin-bottom:36px}
-.role-cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:400px;margin-bottom:28px}
-.role-card{background:rgba(255,255,255,0.04);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:28px 16px;text-align:center;cursor:pointer;transition:all .25s}
-.role-card:hover,.role-card.sel{border-color:#d4956a;background:linear-gradient(135deg,#cc785c12,#d4956a28);transform:translateY(-2px)}
-.role-icon{font-size:40px;margin-bottom:10px}
-.role-name{font-weight:800;font-size:16px}
-.role-desc{font-size:11px;opacity:.45;margin-top:4px}
-.login-btn{width:100%;max-width:400px;padding:16px;border-radius:8px;border:none;background:linear-gradient(135deg,#cc785c,#e8a87c);color:#000;font-size:17px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:0 8px 32px rgba(212,160,23,0.5);transition:all .2s}
+/* LOGIN BOXES */
+.screen-wrapper{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:48px 40px;width:100%;max-width:400px;text-align:center}
+.login-icon{font-size:56px;margin-bottom:16px}
+.login-title{font-size:22px;font-weight:800;margin-bottom:6px}
+.login-sub{font-size:13px;color:var(--muted);margin-bottom:28px;line-height:1.6}
+.pw-wrap{margin-bottom:14px}
+.pw-input{width:100%;padding:13px 16px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:18px;font-family:inherit;outline:none;text-align:center;letter-spacing:6px;transition:.2s}
+.pw-input:focus{border-color:var(--accent)}
+.login-btn{width:100%;padding:13px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;transition:.2s}
 .login-btn:active{transform:scale(.97)}
+.login-err{color:var(--red);font-size:12px;margin-top:10px;display:none}
+.back-link{margin-top:20px;font-size:11px;opacity:.6;cursor:pointer;text-decoration:underline;display:block}
 
-/* ======= APP SHELL ======= */
-#appScreen{display:none;min-height:100vh}
+/* DASHBOARD */
+#dashboard{display:none}
 
-/* SIDEBAR OVERLAY */
-.sidebar-overlay{position:fixed;inset:0;background:#0008;z-index:90;opacity:0;pointer-events:none;transition:opacity .25s}
-.sidebar-overlay.open{opacity:1;pointer-events:all}
+/* TOPBAR */
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:50}
+.topbar-logo{font-size:24px}
+.topbar-title{font-weight:800;font-size:16px;flex:1}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.sync-txt{font-size:12px;color:var(--muted)}
+.save-btn{padding:9px 20px;border-radius:8px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit}
+.logout-btn{padding:9px 16px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;cursor:pointer;font-family:inherit}
 
-/* SIDEBAR */
-.sidebar{position:fixed;top:0;right:0;height:100%;width:280px;background:rgba(22,22,22,0.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);z-index:100;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-8px 0 40px rgba(0,0,0,0.8);border-left:1px solid rgba(255,255,255,0.07)}
-.sidebar.open{transform:translateX(0)}
-
-.sidebar-header{padding:24px 20px 16px;border-bottom:1px solid #2f2f2f}
-.sidebar-school{font-size:11px;opacity:.45;margin-bottom:4px}
-.sidebar-schoolname{font-weight:800;font-size:16px}
-
-.sidebar-user{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid #2f2f2f}
-.s-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;flex-shrink:0}
-.s-user-name{font-weight:700;font-size:14px}
-.s-user-role{font-size:11px;opacity:.45;margin-top:2px}
-
-.sidebar-nav{flex:1;padding:12px 0;overflow-y:auto}
-.nav-section-title{font-size:10px;font-weight:700;opacity:.35;padding:10px 20px 6px;text-transform:uppercase;letter-spacing:1px}
-.nav-item{display:flex;align-items:center;gap:12px;padding:13px 20px;cursor:pointer;transition:all .15s;border-right:3px solid transparent}
-.nav-item:hover{background:#ffffff08}
-.nav-item.active{background:linear-gradient(90deg,#cc785c15,#d4956a18);border-right-color:#d4956a}
-.nav-item.active .nav-label{color:#e8a87c;font-weight:700}
-.nav-icon{font-size:20px;width:28px;text-align:center}
-.nav-label{font-size:14px;color:#9a9a9a}
-.nav-badge{margin-right:auto;background:#ef4444;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px}
-
-.nav-divider{height:1px;background:#2f2f2f;margin:8px 20px}
-
-.sidebar-switch{padding:16px 20px;border-top:1px solid #2f2f2f}
-.switch-role-btn{width:100%;padding:12px;border-radius:8px;border:1px solid #2f2f2f;background:#212121;color:#f8fafc;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s}
-.switch-role-btn:hover{border-color:#d4956a;color:#e8a87c}
-
-/* HEADER */
-.header{background:rgba(33,33,33,0.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(217,119,6,0.3);padding:14px 18px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 24px rgba(0,0,0,0.5);position:sticky;top:0;z-index:50}
-.menu-btn{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:4px;line-height:1}
-.h-info{flex:1}
-.h-title{font-weight:800;font-size:16px}
-.h-sub{font-size:11px;opacity:.7;margin-top:1px}
-.h-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0}
+/* TABS */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 24px;background:var(--surface)}
+.tab{padding:14px 20px;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;transition:.2s}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
 
 /* MAIN */
-.main{padding:18px 16px;max-width:700px;margin:0 auto;width:100%}
-.page{display:none}.page.active{display:block}
+.main{padding:24px;max-width:800px;margin:0 auto}
+.section{display:none}.section.active{display:block}
 
-/* CARDS */
-.card{background:#1e1e1e;border-radius:12px;border:1px solid #2f2f2f;padding:18px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
-.card-dark{background:rgba(255,255,255,0.03);backdrop-filter:blur(8px);border-radius:8px;border:1px solid rgba(255,255,255,0.06);padding:13px 15px;margin-bottom:9px}
-.section-title{font-weight:700;font-size:15px;margin-bottom:14px;opacity:.9}
-
-/* STATS */
-.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
-.stat{background:rgba(255,255,255,0.04);backdrop-filter:blur(8px);border-radius:8px;padding:14px 10px;border:1px solid rgba(255,255,255,0.07);text-align:center}
-.stat-icon{font-size:22px;margin-bottom:4px}
-.stat-val{font-weight:800;font-size:18px}
-.stat-lbl{font-size:10px;opacity:.5;margin-top:2px}
-
-/* STUDENTS SELECTOR (parent) */
-.students-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}
-.student-card{padding:14px;border-radius:8px;border:2px solid #2f2f2f;background:#212121;cursor:pointer;display:flex;align-items:center;gap:12px;transition:all .2s}
-.student-card.active{border-color:#d4956a;background:linear-gradient(135deg,#cc785c10,#d4956a20)}
-.st-av{width:42px;height:42px;border-radius:50%;background:#2f2f2f;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;flex-shrink:0}
-.student-card.active .st-av{background:linear-gradient(135deg,#cc785c,#e8a87c)}
-.st-name{font-weight:700;font-size:13px}
-.st-grade{font-size:11px;opacity:.45;margin-top:2px}
-
-/* SCORE BAR */
-.bar-wrap{flex:1;background:#ffffff12;border-radius:8px;height:7px;overflow:hidden}
-.bar-fill{height:100%;border-radius:8px}
-
-/* BADGE */
-.badge{padding:4px 12px;border-radius:8px;font-size:11px;font-weight:700}
-.bp{background:#16a34a22;color:#22c55e;border:1px solid #22c55e44}
-.ba{background:#dc262622;color:#ef4444;border:1px solid #ef444444}
-.bl{background:#d9770622;color:#f59e0b;border:1px solid #f59e0b44}
-
-/* TEACHER ROWS */
-.student-row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(255,255,255,0.03);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.04);border-radius:8px;margin-bottom:8px}
-.t-av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#cc785c,#e8a87c);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex-shrink:0}
-.s-name-t{flex:1;font-weight:600;font-size:13px}
-.score-input{width:58px;padding:6px 8px;border-radius:8px;border:1px solid #3f3f3f;background:#212121;color:#f8fafc;font-size:14px;font-weight:700;text-align:center;outline:none;font-family:inherit}
-.score-input:focus{border-color:#d4956a}
-
-/* ATTEND BTNS */
-.attend-row{display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(255,255,255,0.03);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.04);border-radius:8px;margin-bottom:8px}
-.attend-name{flex:1;font-weight:600;font-size:13px}
-.status-btns{display:flex;gap:5px}
-.s-btn{padding:5px 9px;border-radius:8px;border:none;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;opacity:.4}
-.s-btn.on{opacity:1}
-.sb-p{background:#16a34a22;color:#22c55e;border:1px solid #22c55e55}
-.sb-p.on{background:#16a34a55}
-.sb-a{background:#dc262622;color:#ef4444;border:1px solid #ef444455}
-.sb-a.on{background:#dc262655}
-.sb-l{background:#d9770622;color:#f59e0b;border:1px solid #f59e0b55}
-.sb-l.on{background:#d9770655}
-
-/* ANNOUNCEMENT */
-.ann-item{background:rgba(255,255,255,0.03);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.04);border-radius:8px;padding:15px;margin-bottom:11px;display:flex;gap:12px}
-.ann-icon-box{font-size:22px;background:#212121;border-radius:8px;width:46px;height:46px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.ann-title{font-weight:700;font-size:13px}
-.ann-date{font-size:10px;background:#cc785c22;color:#e8a87c;padding:2px 9px;border-radius:8px;border:1px solid #cc785c44;margin-right:6px}
-.ann-desc{font-size:12px;opacity:.55;line-height:1.7;margin-top:4px}
-
-/* HOMEWORK */
-.hw-item{background:rgba(255,255,255,0.03);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.04);border-radius:8px;padding:13px 15px;margin-bottom:9px}
-.hw-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
-.hw-sub{font-weight:700;font-size:13px}
-.hw-due{font-size:10px;padding:3px 10px;border-radius:8px;font-weight:700}
-.urgent{background:#dc262622;color:#ef4444;border:1px solid #ef444444}
-.normal{background:#2f2f2f22;color:#9a9a9a;border:1px solid #3f3f3f44}
-.hw-task{font-size:12px;opacity:.55}
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin-bottom:20px}
+.card-title{font-size:15px;font-weight:800;margin-bottom:18px;display:flex;align-items:center;gap:8px}
 
 /* FORM */
-.form-group{margin-bottom:13px}
-.form-label{font-size:12px;color:#9a9a9a;margin-bottom:5px;display:block}
-.form-input,.form-select,.form-textarea{width:100%;padding:10px 13px;border-radius:8px;border:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.04);backdrop-filter:blur(6px);color:#f8fafc;font-size:14px;outline:none;font-family:inherit;direction:rtl;transition:border-color .2s}
-.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:#d4956a}
-.form-textarea{resize:vertical;min-height:80px}
-.form-select option{background:#212121}
-.btn-primary{width:100%;padding:12px;border-radius:8px;border:none;background:linear-gradient(135deg,#cc785c,#e8a87c);color:#000;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit;transition:all .2s;box-shadow:0 4px 20px rgba(212,160,23,0.4)}
-.btn-primary:active{transform:scale(.97)}
-.btn-success{width:100%;padding:12px;border-radius:8px;border:none;background:linear-gradient(135deg,#059669,#0d9488);color:#fff;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit;margin-top:6px;transition:all .2s;box-shadow:0 4px 16px rgba(5,150,105,0.35)}
-.btn-success:active{transform:scale(.97)}
-.del-btn{background:none;border:none;color:#ef444488;cursor:pointer;font-size:16px;padding:0 4px;transition:color .2s}
-.del-btn:hover{color:#ef4444}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.form-group{margin-bottom:14px}
+.form-label{font-size:12px;color:var(--muted);margin-bottom:6px;display:block}
+.form-input,.form-select{width:100%;padding:10px 13px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:inherit;outline:none;transition:.2s}
+.form-input:focus,.form-select:focus{border-color:var(--accent)}
+.add-btn{padding:10px 22px;border-radius:8px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit}
+
+/* LIST ITEMS */
+.list-item{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--surface2);border-radius:8px;margin-bottom:8px;border:1px solid var(--border)}
+.item-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0}
+.item-avatar.blue{background:linear-gradient(135deg,#0ea5e9,#06b6d4)}
+.item-avatar.green{background:linear-gradient(135deg,#059669,#0d9488)}
+.item-info{flex:1}
+.item-name{font-weight:700;font-size:13px}
+.item-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.item-badge{padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;background:#38bdf818;color:#38bdf8;border:1px solid #38bdf833;font-family:monospace;letter-spacing:2px}
+.del-btn{background:none;border:none;color:#ef444466;cursor:pointer;font-size:18px;transition:.2s;padding:4px}
+.del-btn:hover{color:var(--red)}
+.empty{text-align:center;padding:32px;color:var(--muted);font-size:13px}
 
 /* TOAST */
-.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#212121;border:1px solid #22c55e55;color:#22c55e;padding:10px 22px;border-radius:8px;font-weight:700;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid #22c55e44;color:#22c55e;padding:10px 22px;border-radius:8px;font-size:13px;font-weight:700;z-index:999;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
 
-/* INSTALL */
-.install-bar{display:none;position:fixed;bottom:0;left:0;right:0;background:linear-gradient(90deg,#cc785c,#e8a87c);padding:12px 16px;align-items:center;gap:10px;z-index:80}
-.install-bar.show{display:flex}
-.i-text{flex:1;font-size:13px;font-weight:600}
-.i-btn{background:#fff;color:#cc785c;border:none;border-radius:8px;padding:7px 14px;font-weight:700;cursor:pointer;font-size:12px;font-family:inherit}
-.i-close{background:none;border:none;color:#fff;font-size:18px;cursor:pointer}
-
-footer{text-align:center;opacity:.2;font-size:11px;padding:16px 0 50px}
-
-/* WELCOME MODAL */
-.welcome-bg{position:fixed;inset:0;background:#0009;z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
-.welcome-box{background:#1a1a1a;border:1px solid #2f2f2f;border-radius:16px;width:100%;max-width:400px;max-height:85vh;overflow-y:auto;direction:rtl}
-.welcome-header{padding:24px 24px 0;text-align:center}
-.welcome-icon{font-size:48px;margin-bottom:10px}
-.welcome-title{font-size:20px;font-weight:900;margin-bottom:4px}
-.welcome-sub{font-size:12px;opacity:.45;margin-bottom:20px}
-.welcome-tabs{display:flex;border-bottom:1px solid #2f2f2f;margin:0 24px}
-.w-tab{flex:1;padding:10px;text-align:center;font-size:13px;font-weight:700;color:#666;cursor:pointer;border-bottom:2px solid transparent;transition:.2s}
-.w-tab.active{color:#e8a87c;border-bottom-color:#e8a87c}
-.welcome-content{padding:20px 24px}
-.w-section{display:none}.w-section.active{display:block}
-.w-step{display:flex;gap:12px;margin-bottom:16px;align-items:flex-start}
-.w-num{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#cc785c,#e8a87c);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0;color:#000}
-.w-text{flex:1;font-size:13px;line-height:1.6;color:#ccc}
-.w-text strong{color:#e8a87c}
-.welcome-footer{padding:16px 24px 24px;display:flex;gap:10px}
-.w-skip{flex:1;padding:11px;border-radius:8px;border:1px solid #2f2f2f;background:transparent;color:#666;font-size:13px;cursor:pointer;font-family:inherit}
-.w-next{flex:2;padding:11px;border-radius:8px;border:none;background:linear-gradient(135deg,#cc785c,#e8a87c);color:#000;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit}
-
-.hidden{display:none!important}
-@media(max-width:380px){.students-grid{grid-template-columns:1fr}.status-btns{gap:3px}.s-btn{padding:5px 6px;font-size:10px}}
+/* LOADING */
+.loading-screen{display:flex;align-items:center;justify-content:center;padding:60px;gap:12px;color:var(--muted);font-size:14px}
+.spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 
-<!-- ========== SCHOOL SELECTOR (NEW) ========== -->
-<div id="schoolSelectorScreen">
-  <div class="school-logo">🏫</div>
-  <div class="school-title">اختر مدرستك</div>
-  <div class="school-sub">مرحباً بك في منصة المدارس</div>
+<!-- ================== SETUP / MIGRATION SCREEN ================== -->
+<div id="setupScreen" class="screen-wrapper" style="display:none;">
+  <div class="login-box">
+    <div class="login-icon">🚀</div>
+    <div class="login-title">إعداد المنصة لأول مرة</div>
+    <div class="login-sub">يبدو أن هذه هي المرة الأولى التي تفتح فيها لوحة التحكم.<br/>سنقوم بنقل بياناتك القديمة وإنشاء حساب المدير العام.</div>
+    
+    <div class="form-group" style="text-align:right;margin-bottom:10px">
+      <label class="form-label">كلمة مرور المدير العام (للمنصة)</label>
+      <input class="pw-input" id="setupSuperPass" type="password" placeholder="••••••" style="text-align:right;letter-spacing:0"/>
+    </div>
+
+    <div class="form-group" style="text-align:right;margin-bottom:10px">
+      <label class="form-label">اسم المدرسة الحالية (للترحيل)</label>
+      <input class="form-input" id="setupSchoolName" value="مدرسة ابن المعتم" style="direction:rtl;text-align:right"/>
+    </div>
+
+    <div id="setupLog" style="background:#000;padding:10px;border-radius:5px;font-family:monospace;font-size:10px;text-align:left;height:100px;overflow-y:auto;margin-bottom:15px;color:#888;display:none;"></div>
+
+    <div id="setupErr" class="login-err"></div>
+    <button class="login-btn" id="setupBtn" onclick="runFirstTimeSetup()">بدء الإعداد والترحيل ←</button>
+  </div>
+</div>
+
+<!-- ================== LOGIN SCREENS ================== -->
+
+<!-- SUPER ADMIN LOGIN -->
+<div id="loginScreen" class="screen-wrapper">
+  <div class="login-box">
+    <div class="login-icon">🔐</div>
+    <div class="login-title">منصة المدارس - المدير العام</div>
+    <div class="login-sub">أدخل كلمة مرور المدير العام للدخول</div>
+    <div class="pw-wrap">
+      <input class="pw-input" id="pwInput" type="password" placeholder="••••••"
+        onkeydown="if(event.key==='Enter') checkSuperPass()"/>
+    </div>
+    <button class="login-btn" onclick="checkSuperPass()">دخول ←</button>
+    <div class="login-err" id="loginErr">❌ كلمة المرور خاطئة</div>
+    <a class="back-link" onclick="showSchoolLogin()">أنا مدير مدرسة (ليس المدير العام)</a>
+  </div>
+</div>
+
+<!-- SCHOOL ADMIN LOGIN -->
+<div id="schoolLoginScreen" class="screen-wrapper" style="display:none;">
+  <div class="login-box">
+    <div class="login-icon">🏫</div>
+    <div class="login-title">دخول مدير المدرسة</div>
+    <div class="login-sub">اختر مدرستك وأدخل الرمز السري</div>
+    
+    <div class="form-group" style="text-align:right;margin-bottom:10px">
+      <label class="form-label">اختر المدرسة</label>
+      <select id="loginSchoolSelect" class="form-select" style="direction:rtl">
+        <option value="">جاري التحميل...</option>
+      </select>
+    </div>
+
+    <div class="pw-wrap">
+      <input class="pw-input" id="schoolPwInput" type="password" placeholder="رمز المدرسة"
+        onkeydown="if(event.key==='Enter') checkSchoolPass()"/>
+    </div>
+    <button class="login-btn" onclick="checkSchoolPass()">دخول ←</button>
+    <div class="login-err" id="schoolLoginErr">❌ البيانات خاطئة</div>
+    <a class="back-link" onclick="showSuperLogin()">رجوع للمدير العام</a>
+  </div>
+</div>
+
+<!-- ================== DASHBOARD ================== -->
+<div id="dashboard">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-logo">🏫</div>
+    <div class="topbar-title" id="topTitle">لوحة تحكم المدير العام</div>
+    <div class="sync-dot"></div>
+    <div class="sync-txt" id="syncTxt">متصل</div>
+    <button id="saveBtn" class="save-btn" onclick="saveAll()">💾 حفظ التغييرات</button>
+    <button class="logout-btn" onclick="logout()">خروج</button>
+  </div>
+
+  <!-- SCHOOL SELECTOR (FOR SUPER ADMIN) -->
+  <div id="schoolSelectorArea" style="padding:20px 24px 0;background:var(--surface);border-bottom:1px solid var(--border);display:none">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:700">أنت تصفح بوصفك: المدير العام</div>
+    <div style="font-size:13px;font-weight:600;color:var(--accent)">يمكنك إدارة جميع المدارس من الأسفل</div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs" id="mainTabs">
+    <div class="tab active" onclick="switchTab('schools', this)">🏫 المدارس</div>
+    <div class="tab" onclick="switchTab('password', this)">🔑 كلمة المرور</div>
+  </div>
   
-  <div id="schoolList" class="school-list">
-    <div style="text-align:center;opacity:.5;padding:20px">جاري تحميل المدارس...</div>
+  <!-- SCHOOL ADMIN TABS (HIDDEN BY DEFAULT) -->
+  <div class="tabs" id="schoolAdminTabs" style="display:none">
+    <div class="tab active" onclick="switchTab('teachers', this)">👨‍🏫 المدرسين</div>
+    <div class="tab" onclick="switchTab('subjects', this)">📚 المواد</div>
+    <div class="tab" onclick="switchTab('password', this)">🔑 كلمة المرور</div>
   </div>
 
-  <div class="code-input-wrap" id="schoolCodeWrap">
-    <input class="code-input" id="schoolCodeInput" placeholder="كود المدرسة" maxlength="6"/>
-  </div>
-  
-  <button class="code-btn" id="selectSchoolBtn" style="display:none" onclick="submitSchoolCode()">تأكيد</button>
-  <div class="btn-small" onclick="showSchoolCodeInput()">لدي كود مدرسة؟</div>
-</div>
+  <!-- MAIN -->
+  <div class="main">
 
-<!-- ========== LOGIN ========== -->
-<div id="loginScreen">
-  <div class="login-logo">🏫</div>
-  <div class="login-title" id="loginSchoolName">بوابة المدرسة</div>
-  <div class="login-sub">مدرسة ابن معتم</div>
-  <div class="role-cards">
-    <div class="role-card" id="rc-parent" onclick="selectRole('parent')">
-      <div class="role-icon">👨‍👩‍👧</div>
-      <div class="role-name">ولي أمر</div>
-      <div class="role-desc">تابع أبناءك</div>
-    </div>
-    <div class="role-card sel" id="rc-teacher" onclick="selectRole('teacher')">
-      <div class="role-icon">👨‍🏫</div>
-      <div class="role-name">مدرس</div>
-      <div class="role-desc">إدارة الفصل</div>
-    </div>
-  </div>
-  <!-- زر الدخول: ولي أمر عادي، مدرس بكوكل -->
-  <button class="login-btn" id="mainLoginBtn" onclick="enterApp()">دخول ←</button>
-</div>
+    <!-- SUPER ADMIN: SCHOOLS SECTION -->
+    <div class="section active" id="sec-schools">
+      <div class="card">
+        <div class="card-title">➕ إضافة مدرسة جديدة</div>
+        <div class="form-group">
+          <label class="form-label">اسم المدرسة</label>
+          <input class="form-input" id="newSchoolName" placeholder="مثال: مدرسة السلام الثانوية"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">كلمة مرور المدير (لهذه المدرسة)</label>
+          <input class="form-input" id="newSchoolPass" type="password" placeholder="رمز سري للمدير"/>
+        </div>
+        <button class="add-btn" onclick="addNewSchool()">➕ إنشاء مدرسة</button>
+      </div>
 
-<!-- زر المدير في الزاوية -->
-<a href="admin.html" class="admin-corner" title="لوحة تحكم المدير">
-  <div class="admin-corner-btn">⚙️</div>
-</a>
-
-<!-- ===== شاشة تسجيل دخول المدرس بكوكل ===== -->
-<div id="teacherLoginScreen" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:28px;background:linear-gradient(135deg,#1a1a1a,#111111)">
-  <div style="font-size:56px;margin-bottom:12px">👨‍🏫</div>
-  <div style="font-size:22px;font-weight:900;margin-bottom:6px">دخول المدرس</div>
-  <div style="font-size:13px;opacity:.45;margin-bottom:32px;text-align:center">سجّل دخولك بحساب Gmail الخاص بك</div>
-
-  <div id="googleBtnWrap" style="margin-bottom:20px">
-    <button onclick="handleGoogleLogin()" style="display:flex;align-items:center;gap:12px;padding:13px 24px;border-radius:8px;border:1px solid #3f3f3f;background:#212121;color:#f8fafc;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">
-      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="22"/>
-      تسجيل الدخول بـ Google
-    </button>
-  </div>
-
-  <div id="googleLoginError" style="color:#ef4444;font-size:13px;margin-bottom:12px;display:none">❌ حساب Gmail غير مسجّل — تواصل مع المدير</div>
-  <button style="background:none;border:none;color:#9a9a9a;font-size:13px;cursor:pointer;font-family:inherit;text-decoration:underline" onclick="backToLoginFromTeacher()">← رجوع</button>
-</div>
-
-
-<!-- ===== CODE SCREEN (parent login) ===== -->
-<div id="codeScreen" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:28px;background:linear-gradient(135deg,#1a1a1a,#1a1a1a,#111111)">
-  <div class="code-logo">🔐</div>
-  <div class="code-title">أدخل كود الطالب</div>
-  <div class="code-sub">أرسله لك المدرس على واتساب<br/>لتتابع بيانات ابنك</div>
-  <div class="code-error" id="codeError">❌ الكود غلط! تواصل مع المدرس</div>
-  <div class="code-input-wrap">
-    <input class="code-input" id="codeInput" maxlength="6" placeholder="000000" oninput="this.value=this.value.replace(/[^0-9]/g,'')"/>
-  </div>
-  <button class="code-btn" onclick="submitCode()">دخول ←</button>
-  <button class="code-back" onclick="backToLogin()">← رجوع</button>
-</div>
-
-<!-- ========== APP ========== -->
-<div id="appScreen">
-
-  <!-- SIDEBAR OVERLAY -->
-  <div class="sidebar-overlay" id="overlay" onclick="closeSidebar()"></div>
-
-  <!-- SIDEBAR -->
-  <div class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <div class="sidebar-school">المدرسة</div>
-      <div class="sidebar-schoolname" id="sb-schoolname">🏫 مدرسة ابن معتم</div>
-    </div>
-
-    <div class="sidebar-user">
-      <div class="s-avatar" id="sb-avatar" style="background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#1a1a1a">أ</div>
-      <div>
-        <div class="s-user-name" id="sb-name">أحمد العمري</div>
-        <div class="s-user-role" id="sb-role">ولي الأمر</div>
+      <div class="card">
+        <div class="card-title">🏫 قائمة المدارس (<span id="schoolCount">0</span>)</div>
+        <div id="schoolsList">
+          <div class="loading-screen"><div class="spinner"></div> جاري التحميل...</div>
+        </div>
       </div>
     </div>
 
-    <nav class="sidebar-nav" id="sidebarNav"></nav>
-
-    <div class="sidebar-switch">
-      <button class="switch-role-btn" onclick="switchRole()">
-        <span id="switchIcon">👨‍🏫</span>
-        <span id="switchLabel">التبديل إلى منظور المدرس</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- HEADER -->
-  <div class="header">
-    <button class="menu-btn" onclick="openSidebar()">☰</button>
-    <div class="h-info">
-      <div class="h-title" id="h-title">بوابة أولياء الأمور</div>
-      <div class="h-sub" id="h-sub">ولي الأمر</div>
-    </div>
-    <div class="h-avatar" id="h-avatar" style="background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#1a1a1a">أ</div>
-  </div>
-
-  <!-- MAIN CONTENT -->
-  <div class="main" id="mainContent"></div>
-
-  <footer id="footerTxt" style="opacity:.25;font-size:11px;text-align:center;padding:16px 0 50px">مدارس الحكومة العراقية٢٠٢٦<br/><span style="opacity:.7">تطوير: عبد المللك مروان ياسين</span></footer>
-</div>
-
-<!-- WELCOME MODAL -->
-<div class="welcome-bg" id="welcomeModal" style="display:none">
-  <div class="welcome-box">
-    <div class="welcome-header">
-      <div class="welcome-icon">🏫</div>
-      <div class="welcome-title">أهلاً بك في بوابة المدرسة</div>
-      <div class="welcome-sub">دليل استخدام سريع</div>
-    </div>
-    <div class="welcome-tabs">
-      <div class="w-tab active" onclick="switchWTab('teacher',this)">👨‍🏫 المدرس</div>
-      <div class="w-tab" onclick="switchWTab('parent',this)">👨‍👩‍👧 ولي الأمر</div>
-    </div>
-    <div class="welcome-content">
-
-      <!-- TEACHER -->
-      <div class="w-section active" id="wt-teacher">
-        <div class="w-step">
-          <div class="w-num">١</div>
-          <div class="w-text">اختر <strong>مدرس</strong> من الصفحة الرئيسية ثم اضغط <strong>دخول</strong></div>
+    <!-- SCHOOL ADMIN: TEACHERS SECTION -->
+    <div class="section" id="sec-teachers">
+      <div class="card">
+        <div class="card-title">➕ إضافة مدرس جديد</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Gmail المدرس</label>
+            <input class="form-input" id="newTeacherEmail" placeholder="example@gmail.com" style="direction:ltr;text-align:left"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">اسم المدرس</label>
+            <input class="form-input" id="newTeacherName" placeholder="اسم المدرس"/>
+          </div>
         </div>
-        <div class="w-step">
-          <div class="w-num">٢</div>
-          <div class="w-text">سجّل دخولك بـ <strong>حساب Gmail</strong> الخاص بك</div>
-        </div>
-        <div class="w-step">
-          <div class="w-num">٣</div>
-          <div class="w-text">من <strong>الإعدادات ⚙️</strong> أضف أسماء الطلاب وأكوادهم</div>
-        </div>
-        <div class="w-step">
-          <div class="w-num">٤</div>
-          <div class="w-text">من <strong>إدخال الدرجات 📝</strong> أدخل درجات كل طالب واحفظ</div>
-        </div>
-        <div class="w-step">
-          <div class="w-num">٥</div>
-          <div class="w-text">من <strong>تسجيل الحضور 📅</strong> سجّل حضور الطلاب يومياً</div>
-        </div>
-        <div class="w-step">
-          <div class="w-num">٦</div>
-          <div class="w-text">أرسل <strong>كود كل طالب</strong> لولي أمره عبر واتساب</div>
-        </div>
+        <button class="add-btn" onclick="addTeacherEmail()">➕ إضافة المدرس</button>
       </div>
 
-      <!-- PARENT -->
-      <div class="w-section" id="wt-parent">
-        <div class="w-step">
-          <div class="w-num">١</div>
-          <div class="w-text">اختر <strong>ولي أمر</strong> من الصفحة الرئيسية ثم اضغط <strong>دخول</strong></div>
-        </div>
-        <div class="w-step">
-          <div class="w-num">٢</div>
-          <div class="w-text">أدخل <strong>كود ابنك</strong> الذي أرسله لك المدرس</div>
-        </div>
-        <div class="w-step">
-          <div class="w-num">٣</div>
-          <div class="w-text">من <strong>الدرجات 🏆</strong> شاهد نتائج ابنك في كل المواد</div>
-        </div>
-        <div class="w-step">
-          <div class="w-num">٤</div>
-          <div class="w-text">من <strong>الحضور 📅</strong> تابع سجل حضور وغياب ابنك</div>
-        </div>
-        <div class="w-step">
-          <div class="w-num">٥</div>
-          <div class="w-text">من <strong>الأخبار 📢</strong> اطلع على آخر إعلانات المدرسة</div>
+      <div class="card">
+        <div class="card-title">👨‍🏫 المدرسين المسموح لهم (<span id="teacherCount">0</span>)</div>
+        <div id="teachersList">
+          <div class="loading-screen"><div class="spinner"></div> جاري التحميل...</div>
         </div>
       </div>
+    </div>
 
+    <!-- SCHOOL ADMIN: SUBJECTS SECTION -->
+    <div class="section" id="sec-subjects">
+      <div class="card">
+        <div class="card-title">➕ إضافة مادة جديدة</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">اسم المادة</label>
+            <input class="form-input" id="newSubName" placeholder="مثال: الرياضيات"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">اسم المدرس</label>
+            <input class="form-input" id="newSubTeacher" placeholder="اختياري"/>
+          </div>
+        </div>
+        <button class="add-btn" onclick="addSubject()">➕ إضافة المادة</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📚 المواد الدراسية (<span id="subjectCount">0</span>)</div>
+        <div id="subjectsList">
+          <div class="loading-screen"><div class="spinner"></div> جاري التحميل...</div>
+        </div>
+      </div>
     </div>
-    <div class="welcome-footer">
-      <button class="w-skip" onclick="closeWelcome()">تخطي</button>
-      <button class="w-next" onclick="closeWelcome()">فهمت ✅</button>
+
+    <!-- PASSWORD SECTION (SHARED) -->
+    <div class="section" id="sec-password">
+      <div class="card">
+        <div class="card-title" id="passTitle">🔑 تغيير كلمة المرور</div>
+        <div id="superPassSection">
+          <p style="font-size:13px;color:var(--muted);margin-bottom:15px">أنت المدير العام. تغيير كلمة المرور هنا سيؤثر على دخولك للمنصة.</p>
+        </div>
+        <div id="schoolPassSection" style="display:none">
+          <p style="font-size:13px;color:var(--muted);margin-bottom:15px">تغيير كلمة المرور لمدير هذه المدرسة فقط.</p>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">كلمة المرور الحالية</label>
+          <input class="form-input" id="oldPw" type="password" placeholder="••••••"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">كلمة المرور الجديدة</label>
+          <input class="form-input" id="changePw1" type="password" placeholder="••••••"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">أعد كتابة الجديدة</label>
+          <input class="form-input" id="changePw2" type="password" placeholder="••••••"/>
+        </div>
+        <div id="changePassErr" style="color:var(--red);font-size:12px;margin-bottom:12px;display:none"></div>
+        <button class="add-btn" onclick="changePassword()">💾 حفظ كلمة المرور الجديدة</button>
+      </div>
     </div>
+
   </div>
 </div>
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<!-- INSTALL -->
-<div class="install-bar" id="installBar">
-  <div>📲</div>
-  <div class="i-text">ثبّت التطبيق على جهازك!</div>
-  <button class="i-btn" id="installBtn">تثبيت</button>
-  <button class="i-close" onclick="document.getElementById('installBar').classList.remove('show')">✕</button>
-</div>
-
 <script>
-// ============ GLOBAL VARS ============
-let role = 'teacher';
-let activePage = '';
-let activeParentStudent = 0;
-let schoolID = null; // NEW: ID of the selected school
-let schoolName = 'مدرسة ابن المعتم';
+// ============ CONFIG ============
+let ADMIN_PASS = null; 
+let isSuperAdmin = false; 
+let activeSchoolID = null; 
 
-// قائمة Gmail المسموح بها للمدرسين — أضف Gmail كل مدرس هنا
-let allowedTeacherEmails = [];
-let loggedInTeacherEmail = '';
-let loggedInTeacherName  = '';
-
-const students = [];
-let parentStudentIndex = 0; 
-
+// ============ STATE ============
+let students = [];
 let gradesDB = {};
-let attendDB = [];
-let todayAttend = [];
-let announcements = [];
-let homework = [];
-
-let parentName  = '';
-let teacherName = '';
-let teacherSubject = '';
 let teachers = {};
 let subjectCodes = {};
-let unlockedSubjects = {};
+let allowedTeacherEmails = [];
+let homework = [];
+let announcements = [];
+let attendDB = [];
+let allSchools = []; 
 
-// ============ INIT ============
-window.addEventListener('load', async()=>{
-  // Check if school ID is saved in session
-  const savedSchoolID = sessionStorage.getItem('activeSchoolID');
-  if(savedSchoolID){
-    schoolID = savedSchoolID;
-    await loadSchoolName();
-    document.getElementById('schoolSelectorScreen').style.display='none';
-    document.getElementById('loginScreen').style.display='flex';
-    document.getElementById('loginSchoolName').textContent = schoolName;
-  } else {
-    loadSchoolsList();
+// ============ INIT: CHECK SETUP STATUS ============
+window.addEventListener('load', async ()=>{
+  const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('fbReady', res, {once:true}); });
+  await waitFb();
+  
+  // Check if Super Admin exists
+  try {
+    const snap = await window._getDoc(window._doc(window._db,'platformConfig','admin'));
+    if(snap.exists()){
+      ADMIN_PASS = snap.data().pass;
+      // System is set up, show login
+      document.getElementById('loginScreen').style.display = 'flex';
+    } else {
+      // First time! Show Setup
+      document.getElementById('setupScreen').style.display = 'flex';
+    }
+  } catch(e){
+    // Assume first time if error or not found
+    document.getElementById('setupScreen').style.display = 'flex';
   }
-  setTimeout(showWelcome, 800);
 });
 
-// ============ SCHOOL SELECTOR ============
-async function loadSchoolsList(){
-  const waitFirebase = () => new Promise(res => {
-    if(window._firebaseReady) res();
-    else window.addEventListener('firebaseReady', res, {once:true});
-  });
-  await waitFirebase();
+// ============ SETUP / MIGRATION LOGIC ============
+async function runFirstTimeSetup(){
+  const superPass = document.getElementById('setupSuperPass').value.trim();
+  const schoolName = document.getElementById('setupSchoolName').value.trim();
+  const logBox = document.getElementById('setupLog');
+  const errBox = document.getElementById('setupErr');
+  const btn = document.getElementById('setupBtn');
+  
+  errBox.style.display = 'none';
+  logBox.style.display = 'block';
+  logBox.innerHTML = '';
+  
+  function log(msg, type='info'){
+    const color = type==='err'?'#ef4444':type==='success'?'#22c55e':'#ccc';
+    logBox.innerHTML += `<div style="color:${color}">> ${msg}</div>`;
+    logBox.scrollTop = logBox.scrollHeight;
+  }
+
+  if(!superPass || superPass.length < 4){ errBox.style.display='block'; errBox.textContent='كلمة مرور المدير العام قصيرة'; return; }
+  if(!schoolName){ errBox.style.display='block'; errBox.textContent='أدخل اسم المدرسة'; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'جاري العمل...';
+
   try {
-    // Load public list of schools
-    const snap = await window._getDoc(window._doc(window._db, 'platformConfig', 'schools'));
-    const listEl = document.getElementById('schoolList');
-    listEl.innerHTML = '';
-    
-    if(snap.exists() && snap.data().list && snap.data().list.length > 0){
-      snap.data().list.forEach(s => {
-        const div = document.createElement('div');
-        div.className = 'school-card';
-        div.innerHTML = `<div class="school-icon">🏫</div><div class="school-name">${s.name}</div><div style="font-size:10px;color:#666">اختر</div>`;
-        div.onclick = () => selectSchool(s.id, s.name);
-        listEl.appendChild(div);
+    log('بدء عملية الترحيل والإعداد...', 'info');
+
+    // 1. Read old data
+    log('جاري قراءة البيانات القديمة...', 'info');
+    const oldDataSnap = await window._getDoc(window._doc(window._db, 'school', 'data'));
+    const oldConfigSnap = await window._getDoc(window._doc(window._db, 'school', 'adminConfig'));
+
+    // 2. Create New School Structure
+    const schoolId = 'legacy_school_' + Date.now();
+    log(`إنشاء هيكل للمدرسة: ${schoolName} (${schoolId})`, 'info');
+
+    const schoolData = {
+      name: schoolName,
+      students: [],
+      grades: {},
+      teachers: {},
+      allowedTeacherEmails: [],
+      attendDB: [],
+      announcements: [],
+      homework: [],
+      subjectCodes: {}
+    };
+
+    if(oldDataSnap.exists()){
+      Object.assign(schoolData, oldDataSnap.data());
+      log('تم نسخ البيانات القديمة بنجاح', 'success');
+    }
+
+    await window._setDoc(window._doc(window._db, 'schools', schoolId), schoolData);
+
+    // 3. Move Admin Pass
+    let schoolPass = '123456'; // Default if none
+    if(oldConfigSnap.exists()){
+      schoolPass = oldConfigSnap.data().pass;
+      await window._setDoc(window._doc(window._db, 'schools', schoolId, 'settings', 'admin'), { password: schoolPass });
+      log('تم نقل كلمة مرور المدير القديمة', 'success');
+    } else {
+      await window._setDoc(window._doc(window._db, 'schools', schoolId, 'settings', 'admin'), { password: schoolPass });
+      log('تم إنشاء كلمة مرور افتراضية للمدرسة: 123456', 'info');
+    }
+
+    // 4. Create Super Admin
+    await window._setDoc(window._doc(window._db,'platformConfig','admin'), { pass: superPass });
+    log('تم إنشاء حساب المدير العام', 'success');
+
+    // 5. Add School to List
+    await window._setDoc(window._doc(window._db, 'platformConfig', 'schools'), {
+      list: [{ id: schoolId, name: schoolName, active: true }]
+    });
+    log('تمت إضافة المدرسة للمنصة', 'success');
+
+    log('------------------------------------------------', 'info');
+    log('✅ تم الإعداد بنجاح! جاري تحويلك...', 'success');
+
+    // Reload to enter normal mode
+    setTimeout(() => location.reload(), 1500);
+
+  } catch(e){
+    log(`خطأ: ${e.message}`, 'err');
+    btn.disabled = false;
+    btn.textContent = 'حاول مرة أخرى';
+  }
+}
+
+// ============ LOGIN LOGIC ============
+async function checkSuperPass(){
+  const pw = document.getElementById('pwInput').value;
+  if(!ADMIN_PASS){ await loadSuperAdminPass(); }
+  if(pw === ADMIN_PASS){
+    isSuperAdmin = true;
+    enterDashboard();
+    renderSchoolsList();
+  } else {
+    document.getElementById('loginErr').style.display = 'block';
+    document.getElementById('pwInput').value = '';
+  }
+}
+
+async function loadSchoolsForSelect(){
+  const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('fbReady', res, {once:true}); });
+  await waitFb();
+  try {
+    const snap = await window._getDoc(window._doc(window._db,'platformConfig','schools'));
+    const sel = document.getElementById('loginSchoolSelect');
+    sel.innerHTML = '<option value="">-- اختر مدرسة --</option>';
+    if(snap.exists() && snap.data().list){
+      allSchools = snap.data().list;
+      allSchools.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = s.name;
+        sel.appendChild(opt);
       });
-    } else {
-      listEl.innerHTML = '<div style="text-align:center;opacity:.5;padding:20px">لا توجد مدارس مسجلة حالياً</div>';
-    }
-  } catch(e){
-    console.error(e);
-    document.getElementById('schoolList').innerHTML = '<div style="text-align:center;opacity:.5;padding:20px">خطأ في تحميل القائمة</div>';
-  }
-}
-
-function showSchoolCodeInput(){
-  document.getElementById('schoolList').style.display='none';
-  document.getElementById('schoolCodeWrap').style.display='block';
-  document.getElementById('selectSchoolBtn').style.display='block';
-}
-
-async function submitSchoolCode(){
-  const code = document.getElementById('schoolCodeInput').value.trim();
-  if(!code) return;
-  // Simple logic: assume code = schoolID for now, or search by code in future
-  // For now, let's try to fetch by ID directly (if code is ID) or we can search
-  // To keep it simple: We will treat the code as the School ID
-  // In a real app, you'd query a collection to find school by code.
-  
-  // Let's try to fetch the school doc directly with the code as ID
-  try {
-    const snap = await window._getDoc(window._doc(window._db, 'schools', code));
-    if(snap.exists()){
-      selectSchool(code, snap.data().name);
-    } else {
-      toast('❌ كود المدرسة غير صحيح');
-    }
-  } catch(e){
-    toast('❌ خطأ في البحث');
-  }
-}
-
-async function selectSchool(id, name){
-  schoolID = id;
-  schoolName = name;
-  sessionStorage.setItem('activeSchoolID', id);
-  sessionStorage.setItem('activeSchoolName', name);
-  
-  document.getElementById('schoolSelectorScreen').style.display='none';
-  document.getElementById('loginScreen').style.display='flex';
-  document.getElementById('loginSchoolName').textContent = name;
-  document.getElementById('sb-schoolname').textContent = '🏫 ' + name;
-}
-
-async function loadSchoolName(){
-  if(!schoolID) return;
-  try {
-    const snap = await window._getDoc(window._doc(window._db, 'schools', schoolID));
-    if(snap.exists()){
-      schoolName = snap.data().name;
     }
   } catch(e){}
 }
 
-// ============ NAV CONFIG ============
-const parentNav = [
-  {id:'p-grades',   icon:'🏆', label:'الدرجات'},
-  {id:'p-attend',   icon:'📅', label:'الحضور'},
-  {id:'p-news',     icon:'📢', label:'الأخبار والإعلانات'},
-  {id:'p-homework', icon:'📚', label:'الواجبات'},
-  {id:'p-settings', icon:'⚙️', label:'الإعدادات'},
-];
-const teacherNav = [
-  {id:'t-grades',   icon:'📝', label:'إدخال الدرجات'},
-  {id:'t-attend',   icon:'📅', label:'تسجيل الحضور'},
-  {id:'t-announce', icon:'📢', label:'إرسال الإعلانات'},
-  {id:'t-homework', icon:'📚', label:'إدارة الواجبات'},
-  {id:'t-settings', icon:'⚙️', label:'الإعدادات'},
-];
-
-// ============ LOGIN ============
-function selectRole(r){
-  role=r;
-  document.getElementById('rc-parent').classList.toggle('sel',r==='parent');
-  document.getElementById('rc-teacher').classList.toggle('sel',r==='teacher');
-}
-async function enterApp(){
-  if(role === 'parent'){
-    document.getElementById('loginScreen').style.display='none';
-    document.getElementById('codeScreen').style.display='flex';
-    document.getElementById('codeInput').value='';
-    document.getElementById('codeError').classList.remove('show');
-    loadFromCloud().catch(()=>{});
-  } else {
-    document.getElementById('loginScreen').style.display='none';
-    document.getElementById('teacherLoginScreen').style.display='flex';
-    document.getElementById('googleLoginError').style.display='none';
-    loadFromCloud().catch(()=>{});
+async function checkSchoolPass(){
+  const schoolId = document.getElementById('loginSchoolSelect').value;
+  const pw = document.getElementById('schoolPwInput').value;
+  if(!schoolId){ toast('⚠️ اختر مدرسة'); return; }
+  
+  await loadSchoolsForSelect(); 
+  
+  try {
+    const snap = await window._getDoc(window._doc(window._db, 'schools', schoolId, 'settings', 'admin'));
+    if(snap.exists() && snap.data().password === pw){
+      isSuperAdmin = false;
+      activeSchoolID = schoolId;
+      enterDashboard();
+      loadData();
+    } else {
+      document.getElementById('schoolLoginErr').style.display = 'block';
+      document.getElementById('schoolPwInput').value = '';
+    }
+  } catch(e){
+    toast('❌ خطأ في الاتصال');
   }
 }
-function backToLoginFromTeacher(){
-  document.getElementById('teacherLoginScreen').style.display='none';
-  document.getElementById('loginScreen').style.display='flex';
+
+function showSchoolLogin(){
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('schoolLoginScreen').style.display = 'flex';
+  loadSchoolsForSelect();
 }
-async function handleGoogleLogin(){
-  try {
-    const provider = new window._GoogleAuthProvider();
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    if(isMobile){
-      await window._signInWithRedirect(window._auth, provider);
-    } else {
-      const result = await window._signInWithPopup(window._auth, provider);
-      await processGoogleResult(result);
-    }
-  } catch(e){ console.log('خطأ في تسجيل الدخول', e); }
+function showSuperLogin(){
+  document.getElementById('schoolLoginScreen').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
 }
 
-async function processGoogleResult(result){
-  if(!result) return;
-  const email = result.user.email;
-  const name  = result.user.displayName;
-  await loadFromCloud();
-  // CHECK ALLOWED EMAILS FOR THIS SCHOOL
-  const allowed = allowedTeacherEmails.length === 0 || allowedTeacherEmails.includes(email);
-  if(!allowed){
-    document.getElementById('googleLoginError').style.display='block';
-    await window._signOut(window._auth);
+async function loadSuperAdminPass(){
+  const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('fbReady', res, {once:true}); });
+  await waitFb();
+  try {
+    const snap = await window._getDoc(window._doc(window._db,'platformConfig','admin'));
+    if(snap.exists()) ADMIN_PASS = snap.data().pass;
+  } catch(e){}
+}
+
+function enterDashboard(){
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('schoolLoginScreen').style.display = 'none';
+  document.getElementById('setupScreen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  
+  if(isSuperAdmin){
+    document.getElementById('topTitle').textContent = 'لوحة تحكم المدير العام';
+    document.getElementById('schoolSelectorArea').style.display = 'block';
+    document.getElementById('mainTabs').style.display = 'flex';
+    document.getElementById('schoolAdminTabs').style.display = 'none';
+    document.getElementById('superPassSection').style.display = 'block';
+    document.getElementById('schoolPassSection').style.display = 'none';
+    switchTab('schools', document.querySelector('#mainTabs .tab'));
+  } else {
+    document.getElementById('topTitle').textContent = 'لوحة تحكم مدير المدرسة';
+    document.getElementById('schoolSelectorArea').style.display = 'none';
+    document.getElementById('mainTabs').style.display = 'none';
+    document.getElementById('schoolAdminTabs').style.display = 'flex';
+    document.getElementById('superPassSection').style.display = 'none';
+    document.getElementById('schoolPassSection').style.display = 'block';
+    switchTab('teachers', document.querySelector('#schoolAdminTabs .tab'));
+  }
+}
+
+function logout(){
+  location.reload();
+}
+
+// ============ SUPER ADMIN: SCHOOLS ============
+async function renderSchoolsList(){
+  if(!isSuperAdmin) return;
+  const list = document.getElementById('schoolsList');
+  list.innerHTML = '';
+  await loadSchoolsForSelect();
+  
+  if(allSchools.length === 0){
+    list.innerHTML = '<div class="empty">لا توجد مدارس بعد. أضف مدرسة جديدة.</div>';
     return;
   }
-  loggedInTeacherEmail = email;
-  loggedInTeacherName  = name;
-  teacherName = name;
-  document.getElementById('teacherLoginScreen').style.display='none';
-  document.getElementById('codeScreen').style.display='none';
-  document.getElementById('loginScreen').style.display='none';
-  document.getElementById('appScreen').style.display='block';
-  applyRole();
+  
+  list.innerHTML = allSchools.map(s => `
+    <div class="list-item">
+      <div class="item-avatar">🏫</div>
+      <div class="item-info">
+        <div class="item-name">${s.name}</div>
+        <div class="item-sub">ID: ${s.id}</div>
+      </div>
+      <button class="del-btn" onclick="deleteSchool('${s.id}')">🗑</button>
+    </div>
+  `).join('');
+  document.getElementById('schoolCount').textContent = allSchools.length;
 }
 
-async function checkRedirectResult(){
-  const waitFirebase = () => new Promise(res => {
-    if(window._firebaseReady) res();
-    else window.addEventListener('firebaseReady', res, {once:true});
-  });
-  await waitFirebase();
+async function addNewSchool(){
+  const name = document.getElementById('newSchoolName').value.trim();
+  const pass = document.getElementById('newSchoolPass').value.trim();
+  if(!name || !pass){ toast('⚠️ أدخل الاسم وكلمة المرور'); return; }
+  
+  const id = 'school_' + Date.now();
+  
   try {
-    const result = await window._getRedirectResult(window._auth);
-    if(result && result.user){
-      await loadFromCloud();
-      await processGoogleResult(result);
-    }
-  } catch(e){ console.log('خطأ redirect', e); }
-}
-checkRedirectResult();
-
-// ============ DATA OPS (UPDATED FOR MULTI-SCHOOL) ============
-async function loadFromCloud(){
-  if(!schoolID) return; // Must select school first
-  const waitFirebase = () => new Promise(res => {
-    if(window._firebaseReady) res();
-    else window.addEventListener('firebaseReady', res, {once:true});
-  });
-  await waitFirebase();
-  try {
-    // NEW PATH: schools/{schoolID}
-    const snap = await window._getDoc(window._doc(window._db, 'schools', schoolID));
-    if(snap.exists()){
-      const d = snap.data();
-      if(d.students)             students.splice(0, students.length, ...d.students);
-      if(d.grades)               Object.assign(gradesDB, d.grades);
-      if(d.homework)             homework.splice(0, homework.length, ...d.homework);
-      if(d.announcements)        announcements.splice(0, announcements.length, ...d.announcements);
-      if(d.subjectCodes)         Object.assign(subjectCodes, d.subjectCodes);
-      if(d.allowedTeacherEmails) allowedTeacherEmails.splice(0, allowedTeacherEmails.length, ...d.allowedTeacherEmails);
-      if(d.attendDB)             attendDB.splice(0, attendDB.length, ...d.attendDB);
-      if(d.teachers)             Object.assign(teachers, d.teachers);
-      
-      const todayKey = getTodayDate();
-      const todayRec = attendDB.find(a => a.date === todayKey);
-      todayAttend = todayRec ? [...todayRec.statuses] : students.map(()=>'حاضر');
-    }
-  } catch(e){ console.log('خطأ في التحميل', e); }
-}
-
-async function saveToCloud(){
-  if(!schoolID) return;
-  const waitFirebase = () => new Promise(res => {
-    if(window._firebaseReady) res();
-    else window.addEventListener('firebaseReady', res, {once:true});
-  });
-  await waitFirebase();
-  try {
-    const data = { 
-      name: schoolName, // Save name too
-      students, grades:gradesDB, homework, announcements, 
-      subjectCodes, allowedTeacherEmails, attendDB, teachers 
-    };
-    // NEW PATH: schools/{schoolID}
-    await window._setDoc(window._doc(window._db, 'schools', schoolID), data);
-    toast('☁️ تم الحفظ على Firebase');
+    await window._setDoc(window._doc(window._db, 'schools', id), {
+      name: name,
+      students: [],
+      grades: {},
+      teachers: {},
+      allowedTeacherEmails: [],
+      attendDB: [],
+      announcements: [],
+      homework: [],
+      subjectCodes: {}
+    });
+    await window._setDoc(window._doc(window._db, 'schools', id, 'settings', 'admin'), {
+      password: pass
+    });
+    await window._updateDoc(window._doc(window._db, 'platformConfig', 'schools'), {
+      list: window._arrayUnion({ id: id, name: name, active: true })
+    });
+    
+    toast('✅ تم إنشاء المدرسة');
+    document.getElementById('newSchoolName').value = '';
+    document.getElementById('newSchoolPass').value = '';
+    renderSchoolsList();
   } catch(e){
     console.error(e);
+    toast('❌ فشل الإنشاء');
+  }
+}
+
+async function deleteSchool(id){
+  if(!confirm('هل أنت متأكد من حذف هذه المدرسة؟ سيتم حذف جميع بياناتها!')) return;
+  try {
+    await window._deleteDoc(window._doc(window._db, 'schools', id));
+    const schoolObj = allSchools.find(s => s.id === id);
+    if(schoolObj){
+      await window._updateDoc(window._doc(window._db, 'platformConfig', 'schools'), {
+        list: window._arrayRemove(schoolObj)
+      });
+    }
+    toast('🗑 تم حذف المدرسة');
+    renderSchoolsList();
+  } catch(e){
+    toast('❌ فشل الحذف');
+  }
+}
+
+// ============ SCHOOL ADMIN: DATA ============
+async function loadData(){
+  if(isSuperAdmin) return; 
+  if(!activeSchoolID) return;
+  
+  setSyncTxt('جاري التحميل...');
+  const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('fbReady', res, {once:true}); });
+  await waitFb();
+  try {
+    const snap = await window._getDoc(window._doc(window._db, 'schools', activeSchoolID));
+    if(snap.exists()){
+      const d = snap.data();
+      if(d.students)             students             = d.students;
+      if(d.grades)               gradesDB             = d.grades;
+      if(d.homework)             homework             = d.homework;
+      if(d.announcements)        announcements        = d.announcements;
+      if(d.subjectCodes)         subjectCodes         = d.subjectCodes;
+      if(d.allowedTeacherEmails) allowedTeacherEmails = d.allowedTeacherEmails;
+      if(d.attendDB)             attendDB             = d.attendDB;
+      if(d.teachers)             Object.assign(teachers, d.teachers);
+    }
+    setSyncTxt('متصل');
+    renderTeachers();
+    renderSubjects();
+    toast('✅ تم تحميل البيانات');
+  } catch(e){
+    setSyncTxt('خطأ في الاتصال');
+    toast('❌ تعذر الاتصال');
+  }
+}
+
+async function saveAll(){
+  if(isSuperAdmin){ return; }
+  if(!activeSchoolID) return;
+  
+  setSyncTxt('جاري الحفظ...');
+  const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('fbReady', res, {once:true}); });
+  await waitFb();
+  try {
+    await window._setDoc(window._doc(window._db,'schools', activeSchoolID), {
+      students, grades:gradesDB, homework, announcements,
+      subjectCodes, allowedTeacherEmails, attendDB, teachers
+    });
+    setSyncTxt('متصل');
+    toast('☁️ تم الحفظ على Firebase');
+  } catch(e){
+    setSyncTxt('خطأ في الحفظ');
     toast('❌ فشل الحفظ');
   }
 }
 
-function submitCode(){
-  const code = document.getElementById('codeInput').value.trim();
-  const idx = students.findIndex(s => s.code === code);
-  if(idx === -1){
-    document.getElementById('codeError').classList.add('show');
-    document.getElementById('codeInput').style.borderColor='#ef4444';
-    setTimeout(()=>{ document.getElementById('codeInput').style.borderColor=''; },1500);
+// ============ TABS ============
+function switchTab(id, el){
+  document.querySelectorAll('.section').forEach(s=>{s.classList.remove('active');s.style.display='none';});
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  
+  document.querySelectorAll('#mainTabs .tab, #schoolAdminTabs .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  
+  const sec = document.getElementById('sec-'+id);
+  sec.classList.add('active');
+  sec.style.display = 'block';
+}
+
+// ============ TEACHERS ============
+function renderTeachers(){
+  document.getElementById('teacherCount').textContent = allowedTeacherEmails.length;
+  const list = document.getElementById('teachersList');
+  if(!allowedTeacherEmails.length){
+    list.innerHTML = '<div class="empty">📭 لا يوجد مدرسين — القائمة فاضية تسمح للكل</div>';
     return;
   }
-  parentStudentIndex = idx;
-  activeParentStudent = idx;
-  document.getElementById('codeScreen').style.display='none';
-  document.getElementById('appScreen').style.display='block';
-  applyRole();
-}
-function backToLogin(){
-  document.getElementById('codeScreen').style.display='none';
-  document.getElementById('loginScreen').style.display='flex';
-}
-
-// ============ ROLE ============
-function applyRole(){
-  const isP = role==='parent';
-  document.getElementById('h-title').textContent  = isP?'بوابة أولياء الأمور':'منظور المدرس';
-  document.getElementById('h-sub').textContent    = isP?'ولي الأمر':'المدرس';
-  document.getElementById('sb-name').textContent  = isP?parentName:teacherName;
-  document.getElementById('sb-role').textContent  = isP?'ولي الأمر':teacherSubject;
-  document.getElementById('switchIcon').textContent  = isP?'👨‍🏫':'👨‍👩‍👧';
-  document.getElementById('switchLabel').textContent = isP?'التبديل إلى منظور المدرس':'التبديل إلى منظور ولي الأمر';
-  const avColor = isP?'linear-gradient(135deg,#fbbf24,#f59e0b)':'linear-gradient(135deg,#06b6d4,#0ea5e9)';
-  const avLetter = isP?parentName.charAt(0):teacherName.charAt(0);
-  document.getElementById('sb-avatar').style.background = avColor;
-  document.getElementById('sb-avatar').textContent = avLetter;
-  document.getElementById('h-avatar').style.background  = avColor;
-  document.getElementById('h-avatar').textContent = avLetter;
-  document.getElementById('sb-schoolname').textContent = '🏫 '+schoolName;
-  buildSidebar();
-  const defaultPage = isP?'p-grades':'t-grades';
-  navigateTo(defaultPage);
-}
-function switchRole(){
-  role = role==='parent'?'teacher':'parent';
-  closeSidebar();
-  applyRole();
-}
-
-// ============ SIDEBAR ============
-function buildSidebar(){
-  const nav = role==='parent'?parentNav:teacherNav;
-  const el = document.getElementById('sidebarNav');
-  const section = role==='parent'?'القائمة الرئيسية':'أدوات المدرس';
-  el.innerHTML = `<div class="nav-section-title">${section}</div>` +
-    nav.map(n=>`
-      <div class="nav-item" id="nav-${n.id}" onclick="navigateTo('${n.id}');closeSidebar()">
-        <div class="nav-icon">${n.icon}</div>
-        <div class="nav-label">${n.label}</div>
-      </div>`).join('');
-}
-function openSidebar(){
-  document.getElementById('sidebar').classList.add('open');
-  document.getElementById('overlay').classList.add('open');
-  document.body.style.overflow='hidden';
-}
-function closeSidebar(){
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('overlay').classList.remove('open');
-  document.body.style.overflow='';
-}
-
-// ============ NAVIGATE ============
-function navigateTo(id){
-  activePage=id;
-  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
-  const ni=document.getElementById('nav-'+id);
-  if(ni) ni.classList.add('active');
-  const mc=document.getElementById('mainContent');
-  mc.innerHTML='';
-  if(id==='p-grades')   mc.innerHTML=renderParentGrades();
-  if(id==='p-attend')   mc.innerHTML=renderParentAttend();
-  if(id==='p-news')     mc.innerHTML=renderParentNews();
-  if(id==='p-homework') mc.innerHTML=renderParentHw();
-  if(id==='t-grades'){  mc.innerHTML=renderTGrades(); setTimeout(onSubjectChange,0); }
-  if(id==='t-attend')   mc.innerHTML=renderTAttend();
-  if(id==='t-announce') mc.innerHTML=renderTAnnounce();
-  if(id==='t-homework') mc.innerHTML=renderTHomework();
-  if(id==='p-settings') mc.innerHTML=renderParentSettings();
-  if(id==='t-settings') mc.innerHTML=renderTeacherSettings();
-}
-
-// ============ PARENT PAGES ============
-function studentSelectorHTML(){
-  const s = students[parentStudentIndex];
-  return `<div style="display:flex;align-items:center;gap:14px;background:#212121;border-radius:8px;padding:14px 18px;margin-bottom:18px;border:2px solid #d4956a">
-    <div class="st-av" style="background:linear-gradient(135deg,#cc785c,#e8a87c)">${s.name.charAt(0)}</div>
-    <div>
-      <div style="font-weight:800;font-size:15px">${s.name}</div>
-      <div style="font-size:12px;opacity:.5;margin-top:2px">${s.grade}</div>
-    </div>
-    <div style="margin-right:auto;font-size:11px;background:#d4956a22;color:#e8a87c;padding:4px 10px;border-radius:8px;border:1px solid #d4956a44">🔐 مسجّل دخول</div>
-  </div>`;
-}
-function selectSt(i){ activeParentStudent=i; navigateTo(activePage); }
-
-function gradeLabel(sc){ return sc>=90?'ممتاز':sc>=80?'جيد جداً':sc>=70?'جيد':sc>=60?'مقبول':'راسب'; }
-function gradeColor(sc){ return sc>=90?'#4ade80':sc>=75?'#fbbf24':'#f87171'; }
-
-function renderParentGrades(){
-  const subjects = Object.keys(gradesDB);
-  const s  = students[parentStudentIndex];
-  const si = parentStudentIndex;
-
-  const getR1 = sub => (gradesDB[sub]?.[si]?.r1) || {};
-  const getR2 = sub => (gradesDB[sub]?.[si]?.r2) || {};
-
-  const rows = subjects.map((sub, idx) => {
-    const r1f = getR1(sub).final ?? 0;
-    const r2f = getR2(sub).final ?? 0;
-    const c1  = r1f > 0 ? gradeColor(r1f) : '#555';
-    const c2  = r2f > 0 ? gradeColor(r2f) : '#555';
-    return `<tr style="border-bottom:1px solid #2a2a2a">
-      <td style="text-align:center;color:#8a8a8a;font-size:11px;padding:10px 5px">${idx+1}</td>
-      <td style="font-weight:600;font-size:13px;padding:10px 8px">${sub}</td>
-      <td style="text-align:center;font-size:11px;color:#8a8a8a;padding:10px 5px">${teachers[sub]||'-'}</td>
-      <td style="text-align:center;padding:10px 5px">
-        <span style="font-weight:800;font-size:16px;color:${c1}">${r1f||'—'}</span>
-        ${r1f>0?`<div style="font-size:9px;color:${c1};margin-top:2px">${gradeLabel(r1f)}</div>`:''}
-      </td>
-      <td style="text-align:center;padding:10px 5px">
-        <span style="font-weight:800;font-size:16px;color:${c2}">${r2f||'—'}</span>
-        ${r2f>0?`<div style="font-size:9px;color:${c2};margin-top:2px">${gradeLabel(r2f)}</div>`:''}
-      </td>
-    </tr>`;
-  }).join('');
-
-  const r1finals = subjects.map(sub => getR1(sub).final ?? 0).filter(v=>v>0);
-  const r2finals = subjects.map(sub => getR2(sub).final ?? 0).filter(v=>v>0);
-  const avg1 = r1finals.length ? Math.round(r1finals.reduce((a,b)=>a+b,0)/r1finals.length) : 0;
-  const avg2 = r2finals.length ? Math.round(r2finals.reduce((a,b)=>a+b,0)/r2finals.length) : 0;
-
-  return studentSelectorHTML() + `
-  <div class="stats-grid" style="grid-template-columns:1fr 1fr">
-    <div class="stat" style="border:1px solid #34d39944">
-      <div class="stat-icon">📘</div>
-      <div class="stat-val" style="color:#34d399">${avg1||'—'}</div>
-      <div class="stat-lbl">معدل الدور الأول</div>
-    </div>
-    <div class="stat" style="border:1px solid #f472b644">
-      <div class="stat-icon">📗</div>
-      <div class="stat-val" style="color:#f472b6">${avg2||'—'}</div>
-      <div class="stat-lbl">معدل الدور الثاني</div>
-    </div>
-  </div>
-  <div class="card" style="padding:0;overflow:hidden">
-    <div style="padding:14px 16px;border-bottom:1px solid #2e2e2e;font-weight:700;font-size:14px">🏆 نتائج الطالب — ${s.name}</div>
-    <div style="overflow-x:auto">
-      <table style="width:100%;border-collapse:collapse;font-family:inherit;direction:rtl">
-        <thead>
-          <tr style="background:#2a2a2a;border-bottom:2px solid #cc785c">
-            <th style="padding:10px 5px;font-size:10px;color:#8a8a8a;text-align:center;width:28px">#</th>
-            <th style="padding:10px 8px;font-size:12px;color:#ececec;text-align:right">المادة</th>
-            <th style="padding:10px 5px;font-size:11px;color:#ececec;text-align:center">المدرس</th>
-            <th style="padding:10px 8px;font-size:11px;color:#34d399;text-align:center">📘 الدور الأول</th>
-            <th style="padding:10px 8px;font-size:11px;color:#f472b6;text-align:center">📗 الدور الثاني</th>
-          </tr>
-        </thead>
-        <tbody>${rows||`<tr><td colspan="5" style="text-align:center;padding:24px;opacity:.4">لا توجد درجات بعد</td></tr>`}</tbody>
-      </table>
-    </div>
-  </div>`;
-}
-
-function renderParentAttend(){
-  const rows=attendDB.map(a=>{
-    const st=a.statuses[activeParentStudent];
-    const cls=st==='حاضر'?'bp':st==='غائب'?'ba':'bl';
-    return `<div class="card-dark" style="display:flex;justify-content:space-between;align-items:center">
-      <span style="font-weight:600;font-size:13px">${a.date}</span>
-      <span class="badge ${cls}">${st}</span></div>`;
-  }).join('');
-  const present=attendDB.filter(a=>a.statuses[activeParentStudent]==='حاضر').length;
-  const absent =attendDB.filter(a=>a.statuses[activeParentStudent]==='غائب').length;
-  return studentSelectorHTML()+`
-    <div class="stats-grid">
-      <div class="stat"><div class="stat-icon">✅</div><div class="stat-val" style="color:#22c55e">${present}</div><div class="stat-lbl">أيام حضور</div></div>
-      <div class="stat"><div class="stat-icon">❌</div><div class="stat-val" style="color:#ef4444">${absent}</div><div class="stat-lbl">أيام غياب</div></div>
-      <div class="stat"><div class="stat-icon">⏰</div><div class="stat-val" style="color:#f59e0b">${attendDB.filter(a=>a.statuses[activeParentStudent]==='متأخر').length}</div><div class="stat-lbl">تأخير</div></div>
-    </div>
-    <div class="card" style="padding:18px"><div class="section-title">📅 سجل حضور ${students[activeParentStudent].name}</div>${rows}</div>`;
-}
-
-function renderParentNews(){
-  const rows=announcements.map(a=>`
-    <div class="ann-item">
-      <div class="ann-icon-box">${a.icon}</div>
-      <div><div style="display:flex;align-items:center;flex-wrap:wrap;margin-bottom:4px">
-        <span class="ann-title">${a.title}</span><span class="ann-date">${a.date}</span></div>
-        <div class="ann-desc">${a.desc}</div></div></div>`).join('');
-  return `<div class="card" style="padding:18px"><div class="section-title">📢 أخبار وإعلانات المدرسة</div>${rows||'<div style="opacity:.4;text-align:center;padding:20px">لا توجد إعلانات حالياً</div>'}</div>`;
-}
-
-function renderParentHw(){
-  const rows=homework.map(h=>`
-    <div class="hw-item" style="border-right:4px solid ${h.urgent?'#ef4444':'#d4956a'}">
-      <div class="hw-hdr"><span class="hw-sub">${h.subject}</span>
-        <span class="hw-due ${h.urgent?'urgent':'normal'}">التسليم: ${h.due}</span></div>
-      <div class="hw-task">${h.task}</div></div>`).join('');
-  return `<div class="stats-grid">
-    <div class="stat"><div class="stat-icon">📋</div><div class="stat-val" style="color:#f59e0b">${homework.length}</div><div class="stat-lbl">واجبات</div></div>
-    <div class="stat"><div class="stat-icon">🔴</div><div class="stat-val" style="color:#ef4444">${homework.filter(h=>h.urgent).length}</div><div class="stat-lbl">عاجلة</div></div>
-    <div class="stat"><div class="stat-icon">✅</div><div class="stat-val" style="color:#22c55e">0</div><div class="stat-lbl">منجزة</div></div>
-  </div>
-  <div class="card" style="padding:18px"><div class="section-title">📚 الواجبات المطلوبة</div>${rows||'<div style="opacity:.4;text-align:center;padding:20px">لا توجد واجبات 🎉</div>'}</div>`;
-}
-
-// ============ TEACHER PAGES ============
-let activeRound = 1; 
-
-function renderTGrades(){
-  const subList = Object.keys(gradesDB);
-  if(!subList.length) return `<div class="card" style="padding:28px;text-align:center;opacity:.5">
-    لا توجد مواد مضافة بعد<br/>
-    <span style="font-size:12px;margin-top:6px;display:block">اذهب إلى ⚙️ الإعدادات وأضف المواد وأسماء المدرسين أولاً</span>
-  </div>`;
-  const subOpts = subList.map(s=>`<option value="${s}">${s}${teachers[s]?' — '+teachers[s]:''}</option>`).join('');
-
-  return `<div class="stats-grid">
-    <div class="stat"><div class="stat-icon">👦</div><div class="stat-val" style="color:#e8a87c">${students.length}</div><div class="stat-lbl">طلاب</div></div>
-    <div class="stat"><div class="stat-icon">📝</div><div class="stat-val" style="color:#f59e0b">${Object.keys(gradesDB).length}</div><div class="stat-lbl">مواد</div></div>
-    <div class="stat"><div class="stat-icon">🏆</div><div class="stat-val" style="color:#22c55e">A</div><div class="stat-lbl">تقدير</div></div>
-  </div>
-  <div class="card" style="padding:18px">
-    <div class="section-title">📝 إدخال درجات الطلاب</div>
-    <div class="form-group">
-      <label class="form-label">اختر المادة</label>
-      <select class="form-select" id="tSubject" onchange="onSubjectChange()">${subOpts}</select>
-    </div>
-    <div id="subjectLockBox"></div>
-    <div id="roundTabsWrap" style="display:none">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
-      <button id="tab_r1" onclick="switchRoundTab(1)"
-        style="padding:11px;border-radius:8px;border:2px solid #34d399;background:#34d39922;color:#34d399;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;transition:all .2s">
-        📘 الدور الأول
-      </button>
-      <button id="tab_r2" onclick="switchRoundTab(2)"
-        style="padding:11px;border-radius:8px;border:2px solid #3f3f3f;background:transparent;color:#9a9a9a;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;transition:all .2s">
-        📗 الدور الثاني
-      </button>
-    </div>
-    <div id="round1_section">
-      <div style="background:#34d39911;border:1px solid #34d39933;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#34d399;font-weight:700">
-        📘 الدور الأول — اليومي + شهري (٣ امتحانات) + نصف السنة + المعدل النهائي
+  list.innerHTML = allowedTeacherEmails.map((em,i)=>`
+    <div class="list-item">
+      <div class="item-avatar blue">م</div>
+      <div class="item-info">
+        <div class="item-name" style="direction:ltr;text-align:right">${em}</div>
+        <div class="item-sub">مدرس مسموح له</div>
       </div>
-      ${students.map((s,i)=>`
-      <div class="student-row" style="flex-direction:column;align-items:stretch;gap:0;padding:14px;margin-bottom:10px">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-          <div class="t-av">${s.name.charAt(0)}</div>
-          <div class="s-name-t">${s.name}</div>
-          <div id="gpreview_r1_${i}" style="margin-right:auto;font-size:11px"></div>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:8px">
-          ${mkInput('اليومي','#fb923c',`r1_d_${i}`,i,'r1')}
-          ${mkInput('شهري ١','#fbbf24',`r1_m1_${i}`,i,'r1')}
-          ${mkInput('شهري ٢','#fbbf24',`r1_m2_${i}`,i,'r1')}
-          ${mkInput('شهري ٣','#fbbf24',`r1_m3_${i}`,i,'r1')}
-          ${mkInput('نصف السنة','#a78bfa',`r1_mid_${i}`,i,'r1')}
-        </div>
-        <div style="border-top:1px dashed #2f2f2f;padding-top:8px">
-          <div style="font-size:10px;color:#34d399;font-weight:700;margin-bottom:5px">✍️ المعدل النهائي للدور الأول (يدخله المدرس)</div>
-          <input class="score-input" id="r1_final_${i}" type="number" min="0" max="100" placeholder="المعدل النهائي"
-            oninput="previewGrade('r1',${i})"
-            style="width:100%;font-size:16px;padding:10px;border-color:#34d39966;color:#34d399"/>
-          <div style="font-size:9px;color:#555;margin-top:3px;text-align:center">/100</div>
-        </div>
-      </div>`).join('')}
-    </div>
-    <div id="round2_section" style="display:none">
-      <div style="background:#f472b611;border:1px solid #f472b633;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#f472b6;font-weight:700">
-        📗 الدور الثاني — اليومي + شهري (٣ امتحانات) + آخر السنة + المعدل النهائي
+      <button class="del-btn" onclick="deleteTeacher(${i})">🗑</button>
+    </div>`).join('');
+}
+
+function addTeacherEmail(){
+  const email = document.getElementById('newTeacherEmail').value.trim().toLowerCase();
+  const name  = document.getElementById('newTeacherName').value.trim();
+  if(!email || !email.includes('@')){ toast('⚠️ أدخل Gmail صحيح'); return; }
+  if(allowedTeacherEmails.includes(email)){ toast('⚠️ الحساب موجود بالفعل'); return; }
+  allowedTeacherEmails.push(email);
+  document.getElementById('newTeacherEmail').value = '';
+  document.getElementById('newTeacherName').value  = '';
+  renderTeachers();
+  toast('✅ تم إضافة ' + email);
+}
+
+function deleteTeacher(i){
+  const em = allowedTeacherEmails[i];
+  if(!confirm('حذف ' + em + '؟')) return;
+  allowedTeacherEmails.splice(i,1);
+  renderTeachers();
+  toast('🗑 تم حذف ' + em);
+}
+
+// ============ SUBJECTS ============
+function renderSubjects(){
+  const subs = Object.keys(gradesDB);
+  document.getElementById('subjectCount').textContent = subs.length;
+  const list = document.getElementById('subjectsList');
+  if(!subs.length){
+    list.innerHTML = '<div class="empty">📚 لا توجد مواد بعد</div>';
+    return;
+  }
+  list.innerHTML = subs.map((sub,i)=>`
+    <div class="list-item">
+      <div class="item-avatar green">م</div>
+      <div class="item-info">
+        <div class="item-name">${sub}</div>
+        <div class="item-sub">${teachers[sub]||'لم يحدد المدرس'}</div>
       </div>
-      ${students.map((s,i)=>`
-      <div class="student-row" style="flex-direction:column;align-items:stretch;gap:0;padding:14px;margin-bottom:10px">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-          <div class="t-av">${s.name.charAt(0)}</div>
-          <div class="s-name-t">${s.name}</div>
-          <div id="gpreview_r2_${i}" style="margin-right:auto;font-size:11px"></div>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:8px">
-          ${mkInput('اليومي','#fb923c',`r2_d_${i}`,i,'r2')}
-          ${mkInput('شهري ١','#fbbf24',`r2_m1_${i}`,i,'r2')}
-          ${mkInput('شهري ٢','#fbbf24',`r2_m2_${i}`,i,'r2')}
-          ${mkInput('شهري ٣','#fbbf24',`r2_m3_${i}`,i,'r2')}
-          ${mkInput('آخر السنة','#38bdf8',`r2_fin_${i}`,i,'r2')}
-        </div>
-        <div style="border-top:1px dashed #2f2f2f;padding-top:8px">
-          <div style="font-size:10px;color:#f472b6;font-weight:700;margin-bottom:5px">✍️ المعدل النهائي للدور الثاني (يدخله المدرس)</div>
-          <input class="score-input" id="r2_final_${i}" type="number" min="0" max="100" placeholder="المعدل النهائي"
-            oninput="previewGrade('r2',${i})"
-            style="width:100%;font-size:16px;padding:10px;border-color:#f472b666;color:#f472b6"/>
-          <div style="font-size:9px;color:#555;margin-top:3px;text-align:center">/100</div>
-        </div>
-      </div>`).join('')}
-    </div>
-    <button class="btn-success" onclick="saveGrades()">💾 حفظ الدرجات</button>
-    </div>
-  </div>`;
+      <div class="item-badge">${subjectCodes[sub]||'----'}</div>
+      <button class="del-btn" onclick="deleteSubject('${sub}')">🗑</button>
+    </div>`).join('');
 }
 
-function mkInput(label, color, id, i, round){
-  return `<div style="text-align:center">
-    <div style="font-size:9px;color:${color};margin-bottom:3px;font-weight:700">${label}</div>
-    <input class="score-input" id="${id}" type="number" min="0" max="100" placeholder="--"
-      oninput="previewGrade('${round}',${i})" style="width:100%;font-size:12px;padding:5px 4px"/>
-    <div style="font-size:8px;color:#444;margin-top:1px">/100</div>
-  </div>`;
+function addSubject(){
+  const name    = document.getElementById('newSubName').value.trim();
+  const teacher = document.getElementById('newSubTeacher').value.trim();
+  if(!name){ toast('⚠️ أدخل اسم المادة'); return; }
+  if(gradesDB[name]){ toast('⚠️ المادة موجودة بالفعل'); return; }
+  gradesDB[name]     = students.map(()=>({}));
+  teachers[name]     = teacher;
+  subjectCodes[name] = Math.floor(1000+Math.random()*9000).toString();
+  document.getElementById('newSubName').value    = '';
+  document.getElementById('newSubTeacher').value = '';
+  renderSubjects();
+  toast('✅ تم إضافة مادة ' + name);
 }
 
-function switchRoundTab(r){
-  activeRound = r;
-  document.getElementById('round1_section').style.display = r===1 ? 'block' : 'none';
-  document.getElementById('round2_section').style.display = r===2 ? 'block' : 'none';
-  const t1 = document.getElementById('tab_r1');
-  const t2 = document.getElementById('tab_r2');
-  t1.style.border      = r===1 ? '2px solid #34d399' : '2px solid #3f3f3f';
-  t1.style.background  = r===1 ? '#34d39922'         : 'transparent';
-  t1.style.color       = r===1 ? '#34d399'            : '#9a9a9a';
-  t2.style.border      = r===2 ? '2px solid #f472b6' : '2px solid #3f3f3f';
-  t2.style.background  = r===2 ? '#f472b622'         : 'transparent';
-  t2.style.color       = r===2 ? '#f472b6'            : '#9a9a9a';
+function deleteSubject(sub){
+  if(!confirm('حذف مادة ' + sub + '؟')) return;
+  delete gradesDB[sub];
+  delete teachers[sub];
+  delete subjectCodes[sub];
+  renderSubjects();
+  toast('🗑 تم حذف مادة ' + sub);
 }
 
-function onSubjectChange(){
-  const sub = document.getElementById('tSubject')?.value;
-  if(!sub) return;
-  const lockBox  = document.getElementById('subjectLockBox');
-  const tabsWrap = document.getElementById('roundTabsWrap');
-  if(unlockedSubjects[sub]){
-    lockBox.innerHTML = '';
-    tabsWrap.style.display = 'block';
-    loadSubjectGrades();
+// ============ CHANGE PASSWORD ============
+async function changePassword(){
+  const oldPw   = document.getElementById('oldPw').value.trim();
+  const newPw1  = document.getElementById('changePw1').value.trim();
+  const newPw2  = document.getElementById('changePw2').value.trim();
+  const err     = document.getElementById('changePassErr');
+  err.style.display = 'none';
+  
+  if(isSuperAdmin){
+    if(oldPw !== ADMIN_PASS){ err.style.display='block'; err.textContent='❌ كلمة المرور الحالية خاطئة'; return; }
+    if(!newPw1 || newPw1.length < 4){ err.style.display='block'; err.textContent='❌ كلمة المرور قصيرة جداً'; return; }
+    if(newPw1 !== newPw2){ err.style.display='block'; err.textContent='❌ كلمتا المرور لا تتطابقان'; return; }
+    
+    const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('fbReady', res, {once:true}); });
+    await waitFb();
+    await window._setDoc(window._doc(window._db,'platformConfig','admin'), { pass: newPw1 });
+    ADMIN_PASS = newPw1;
+    toast('✅ تم تغيير كلمة المرور');
   } else {
-    tabsWrap.style.display = 'none';
-    lockBox.innerHTML = `
-      <div style="background:#1a1a1a;border:2px solid #0ea5e944;border-radius:10px;padding:20px;text-align:center;margin-bottom:16px">
-        <div style="font-size:32px;margin-bottom:8px">🔐</div>
-        <div style="font-weight:700;font-size:14px;margin-bottom:4px">${sub}</div>
-        <div style="font-size:12px;opacity:.5;margin-bottom:16px">أدخل الكود السري لهذه المادة للمتابعة</div>
-        <input id="subCodeInput" type="number" maxlength="4"
-          style="width:160px;padding:12px;border-radius:8px;border:2px solid #0ea5e944;background:#212121;color:#38bdf8;font-size:24px;font-weight:800;text-align:center;outline:none;font-family:inherit;letter-spacing:6px;direction:ltr"
-          placeholder="----" oninput="this.value=this.value.slice(0,4)"/>
-        <div id="subCodeErr" style="color:#ef4444;font-size:12px;margin-top:8px;display:none">❌ الكود غلط!</div>
-        <button onclick="unlockSubject('${sub}')"
-          style="display:block;width:100%;margin-top:12px;padding:12px;border-radius:8px;border:none;background:linear-gradient(135deg,#0ea5e9,#06b6d4);color:#fff;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit">
-          دخول ←
-        </button>
-      </div>`;
+    const snap = await window._getDoc(window._doc(window._db, 'schools', activeSchoolID, 'settings', 'admin'));
+    const currentPass = snap.exists() ? snap.data().password : null;
+    
+    if(oldPw !== currentPass){ err.style.display='block'; err.textContent='❌ كلمة المرور الحالية خاطئة'; return; }
+    if(!newPw1 || newPw1.length < 4){ err.style.display='block'; err.textContent='❌ كلمة المرور قصيرة جداً'; return; }
+    if(newPw1 !== newPw2){ err.style.display='block'; err.textContent='❌ كلمتا المرور لا تتطابقان'; return; }
+    
+    const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('fbReady', res, {once:true}); });
+    await waitFb();
+    await window._setDoc(window._doc(window._db,'schools', activeSchoolID, 'settings', 'admin'), { password: newPw1 });
+    toast('✅ تم تغيير كلمة المرور');
   }
+  
+  document.getElementById('oldPw').value = '';
+  document.getElementById('changePw1').value = '';
+  document.getElementById('changePw2').value = '';
 }
 
-function unlockSubject(sub){
-  const entered = document.getElementById('subCodeInput')?.value.trim();
-  const correct = subjectCodes[sub];
-  if(!correct || entered === correct){
-    unlockedSubjects[sub] = true;
-    document.getElementById('subjectLockBox').innerHTML = `
-      <div style="background:#34d39911;border:1px solid #34d39944;border-radius:8px;padding:8px 14px;margin-bottom:12px;font-size:12px;color:#34d399;display:flex;align-items:center;gap:8px">
-        ✅ <span>تم فتح مادة <strong>${sub}</strong> — تستطيع تعديل الدرجات الآن</span>
-      </div>`;
-    document.getElementById('roundTabsWrap').style.display = 'block';
-    loadSubjectGrades();
-  } else {
-    const err = document.getElementById('subCodeErr');
-    if(err){ err.style.display='block'; setTimeout(()=>err.style.display='none', 2000); }
-    const inp = document.getElementById('subCodeInput');
-    if(inp){ inp.style.borderColor='#ef4444'; setTimeout(()=>inp.style.borderColor='#0ea5e944',1500); }
-  }
-}
-
-function loadSubjectGrades(){
-  const sub = document.getElementById('tSubject').value;
-  students.forEach((_,i) => {
-    const g  = gradesDB[sub]?.[i] || {};
-    const r1 = g.r1 || {};
-    const r2 = g.r2 || {};
-    const set = (id, val) => { const el=document.getElementById(id); if(el) el.value = val>0 ? val : ''; };
-    set(`r1_d_${i}`,   r1.daily);
-    set(`r1_m1_${i}`,  r1.m1);
-    set(`r1_m2_${i}`,  r1.m2);
-    set(`r1_m3_${i}`,  r1.m3);
-    set(`r1_mid_${i}`, r1.midYear);
-    set(`r1_final_${i}`, r1.final);
-    set(`r2_d_${i}`,   r2.daily);
-    set(`r2_m1_${i}`,  r2.m1);
-    set(`r2_m2_${i}`,  r2.m2);
-    set(`r2_m3_${i}`,  r2.m3);
-    set(`r2_fin_${i}`, r2.finalYear);
-    set(`r2_final_${i}`, r2.final);
-    previewGrade('r1', i);
-    previewGrade('r2', i);
-  });
-}
-
-function previewGrade(round, i){
-  const get = id => parseFloat(document.getElementById(id)?.value) || 0;
-  let final, col, label;
-  if(round === 'r1'){
-    final = get(`r1_final_${i}`);
-    col   = final > 0 ? gradeColor(final) : '#555';
-    label = final > 0 ? gradeLabel(final) : '';
-    const el = document.getElementById(`gpreview_r1_${i}`);
-    if(el) el.innerHTML = final > 0
-      ? `<span style="color:${col};font-weight:800">المعدل النهائي: ${final} — ${label}</span>` : '';
-  } else {
-    final = get(`r2_final_${i}`);
-    col   = final > 0 ? gradeColor(final) : '#555';
-    label = final > 0 ? gradeLabel(final) : '';
-    const el = document.getElementById(`gpreview_r2_${i}`);
-    if(el) el.innerHTML = final > 0
-      ? `<span style="color:${col};font-weight:800">المعدل النهائي: ${final} — ${label}</span>` : '';
-  }
-}
-
-function clamp(v){ return isNaN(v) ? 0 : Math.min(100, Math.max(0, v)); }
-
-function saveGrades(){
-  const sub = document.getElementById('tSubject').value;
-  if(!gradesDB[sub]) gradesDB[sub] = [];
-  students.forEach((_,i) => {
-    const get = id => clamp(parseInt(document.getElementById(id)?.value));
-    const prev = gradesDB[sub][i] || {};
-    gradesDB[sub][i] = {
-      r1: {
-        daily:   get(`r1_d_${i}`)   || prev.r1?.daily   || 0,
-        m1:      get(`r1_m1_${i}`)  || prev.r1?.m1      || 0,
-        m2:      get(`r1_m2_${i}`)  || prev.r1?.m2      || 0,
-        m3:      get(`r1_m3_${i}`)  || prev.r1?.m3      || 0,
-        midYear: get(`r1_mid_${i}`) || prev.r1?.midYear  || 0,
-        final:   get(`r1_final_${i}`) || prev.r1?.final  || 0,
-      },
-      r2: {
-        daily:     get(`r2_d_${i}`)     || prev.r2?.daily     || 0,
-        m1:        get(`r2_m1_${i}`)    || prev.r2?.m1        || 0,
-        m2:        get(`r2_m2_${i}`)    || prev.r2?.m2        || 0,
-        m3:        get(`r2_m3_${i}`)    || prev.r2?.m3        || 0,
-        finalYear: get(`r2_fin_${i}`)   || prev.r2?.finalYear || 0,
-        final:     get(`r2_final_${i}`) || prev.r2?.final     || 0,
-      }
-    };
-  });
-  toast('✅ تم حفظ درجات ' + sub);
-  saveToCloud();
-}
-
-function getTodayDate(){
-  const d = new Date();
-  return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
-}
-function renderTAttend(){
-  const todayRecord = attendDB.find(a => a.date === getTodayDate());
-  if(todayRecord) todayAttend = [...todayRecord.statuses];
-  else if(todayAttend.length !== students.length)
-    todayAttend = students.map((_,i) => todayAttend[i] || 'حاضر');
-  const rows=students.map((s,i)=>{
-    const st=todayAttend[i];
-    return `<div class="attend-row">
-      <div class="t-av">${s.name.charAt(0)}</div>
-      <div class="attend-name">${s.name}</div>
-      <div class="status-btns">
-        <button class="s-btn sb-p ${st==='حاضر'?'on':''}" onclick="setAt(${i},'حاضر',this)">حاضر</button>
-        <button class="s-btn sb-a ${st==='غائب'?'on':''}" onclick="setAt(${i},'غائب',this)">غائب</button>
-        <button class="s-btn sb-l ${st==='متأخر'?'on':''}" onclick="setAt(${i},'متأخر',this)">متأخر</button>
-      </div></div>`;
-  }).join('');
-  const present=todayAttend.filter(s=>s==='حاضر').length;
-  return `<div class="stats-grid">
-    <div class="stat"><div class="stat-icon">✅</div><div class="stat-val" style="color:#22c55e" id="presentCount">${present}</div><div class="stat-lbl">حاضر</div></div>
-    <div class="stat"><div class="stat-icon">❌</div><div class="stat-val" style="color:#ef4444" id="absentCount">${todayAttend.filter(s=>s==='غائب').length}</div><div class="stat-lbl">غائب</div></div>
-    <div class="stat"><div class="stat-icon">⏰</div><div class="stat-val" style="color:#f59e0b" id="lateCount">${todayAttend.filter(s=>s==='متأخر').length}</div><div class="stat-lbl">متأخر</div></div>
-  </div>
-  <div class="card" style="padding:18px">
-    <div class="section-title">📅 تسجيل حضور اليوم</div>
-    <div id="attendRows">${rows}</div>
-    <button class="btn-success" onclick="saveAttendance()">💾 حفظ الحضور</button>
-  </div>`;
-}
-function setAt(i,st,btn){
-  todayAttend[i]=st;
-  const row=btn.closest('.attend-row');
-  row.querySelectorAll('.s-btn').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');
-  const p=document.getElementById('presentCount');
-  const a=document.getElementById('absentCount');
-  const l=document.getElementById('lateCount');
-  if(p) p.textContent=todayAttend.filter(s=>s==='حاضر').length;
-  if(a) a.textContent=todayAttend.filter(s=>s==='غائب').length;
-  if(l) l.textContent=todayAttend.filter(s=>s==='متأخر').length;
-}
-function saveAttendance(){
-  const today=getTodayDate();
-  const ex=attendDB.find(a=>a.date===today);
-  if(ex) ex.statuses=[...todayAttend];
-  else attendDB.unshift({date:today,statuses:[...todayAttend]});
-  toast('✅ تم حفظ الحضور');
-  saveToCloud();
-}
-
-function renderTAnnounce(){
-  const list=announcements.map((a,i)=>`
-    <div class="ann-item">
-      <div class="ann-icon-box">${a.icon}</div>
-      <div style="flex:1"><div style="display:flex;align-items:center;flex-wrap:wrap;margin-bottom:4px">
-        <span class="ann-title">${a.title}</span><span class="ann-date">${a.date}</span></div>
-        <div class="ann-desc">${a.desc}</div></div>
-      <button class="del-btn" onclick="delAnn(${i})">🗑</button>
-    </div>`).join('');
-  return `<div class="card" style="padding:18px">
-    <div class="section-title">📢 إرسال إعلان جديد</div>
-    <div class="form-group"><label class="form-label">عنوان الإعلان</label>
-      <input class="form-input" id="annTitle" placeholder="مثال: اجتماع أولياء الأمور"/></div>
-    <div class="form-group"><label class="form-label">التاريخ</label>
-      <input class="form-input" id="annDate" placeholder="مثال: ١٥ مارس"/></div>
-    <div class="form-group"><label class="form-label">التفاصيل</label>
-      <textarea class="form-textarea" id="annDesc" placeholder="اكتب تفاصيل الإعلان..."></textarea></div>
-    <button class="btn-primary" onclick="addAnn()">📢 نشر الإعلان</button>
-  </div>
-  <div class="card" style="padding:18px">
-    <div class="section-title">الإعلانات المنشورة (${announcements.length})</div>
-    ${list||'<div style="opacity:.4;text-align:center;padding:16px">لا توجد إعلانات</div>'}
-  </div>`;
-}
-function addAnn(){
-  const t=document.getElementById('annTitle')?.value.trim();
-  const d=document.getElementById('annDate')?.value.trim();
-  const desc=document.getElementById('annDesc')?.value.trim();
-  if(!t||!desc){toast('⚠️ أدخل العنوان والتفاصيل');return;}
-  announcements.unshift({icon:'📢',title:t,date:d||'',desc});
-  toast('✅ تم نشر الإعلان');
-  saveToCloud();
-  navigateTo('t-announce');
-}
-function delAnn(i){ announcements.splice(i,1); saveToCloud(); navigateTo('t-announce'); }
-
-function renderTHomework(){
-  const list=homework.map((h,i)=>`
-    <div class="hw-item" style="border-right:4px solid ${h.urgent?'#ef4444':'#d4956a'};display:flex;align-items:center;gap:10px">
-      <div style="flex:1">
-        <div class="hw-hdr"><span class="hw-sub">${h.subject}</span>
-          <span class="hw-due ${h.urgent?'urgent':'normal'}">التسليم: ${h.due}</span></div>
-        <div class="hw-task">${h.task}</div></div>
-      <button class="del-btn" onclick="delHw(${i})">🗑</button>
-    </div>`).join('');
-  const subList = Object.keys(gradesDB);
-  const subOpts = subList.length
-    ? subList.map(s=>`<option value="${s}">${s}${teachers[s]?' — '+teachers[s]:''}</option>`).join('')
-    : `<option disabled>لا توجد مواد — أضفها من الإعدادات أولاً</option>`;
-  return `<div class="card" style="padding:18px">
-    <div class="section-title">📚 إضافة واجب جديد</div>
-    <div class="form-group"><label class="form-label">المادة</label>
-      <select class="form-select" id="hwSub">${subOpts}</select></div>
-    <div class="form-group"><label class="form-label">الواجب</label>
-      <input class="form-input" id="hwTask" placeholder="مثال: حل تمارين ص ٤٥-٤٧"/></div>
-    <div class="form-group"><label class="form-label">موعد التسليم</label>
-      <input class="form-input" id="hwDue" placeholder="مثال: غداً أو الأربعاء..."/></div>
-    <button class="btn-primary" onclick="addHw()">➕ إضافة الواجب</button>
-  </div>
-  <div class="card" style="padding:18px">
-    <div class="section-title">الواجبات الحالية (${homework.length})</div>
-    ${list||'<div style="opacity:.4;text-align:center;padding:16px">لا توجد واجبات 🎉</div>'}
-  </div>`;
-}
-function addHw(){
-  const sub=document.getElementById('hwSub')?.value;
-  const task=document.getElementById('hwTask')?.value.trim();
-  const due=document.getElementById('hwDue')?.value.trim();
-  if(!task){toast('⚠️ أدخل الواجب');return;}
-  homework.unshift({subject:sub,task,due:due||'قريباً',urgent:due==='غداً'});
-  toast('✅ تم إضافة الواجب');
-  saveToCloud();
-  navigateTo('t-homework');
-}
-function delHw(i){ homework.splice(i,1); saveToCloud(); navigateTo('t-homework'); }
-
-// ============ SETTINGS ============
-function renderParentSettings(){
-  return `
-  <div class="card" style="padding:18px;margin-bottom:12px">
-    <div class="section-title">👨‍👩‍👧 إعدادات ولي الأمر</div>
-    <div class="form-group">
-      <label class="form-label">اسم ولي الأمر</label>
-      <input class="form-input" id="set_parent" value="${parentName}"/>
-    </div>
-    <button class="btn-success" onclick="saveParent()">💾 حفظ اسم ولي الأمر</button>
-  </div>`;
-}
-
-function renderTeacherSettings(){
-  const subjectList = Object.keys(gradesDB);
-  const addTeacherBtn = `<button onclick="addTeacher()" style="width:100%;padding:10px;border-radius:8px;border:2px dashed #06b6d4;background:transparent;color:#22d3ee;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:12px;font-family:inherit">➕ إضافة مادة ومعلم</button>`;
-  const teacherRows = subjectList.map(sub=>`
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-      <div style="min-width:110px;font-size:12px;opacity:.6">${sub}</div>
-      <input class="form-input" style="flex:1" id="tch_${sub.replace(/ /g,'_')}" value="${teachers[sub]||''}"/>
-    </div>`).join('');
-  const addBtn = `<button onclick="addStudent()" style="width:100%;padding:10px;border-radius:8px;border:2px dashed #d4956a;background:transparent;color:#e8a87c;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:12px;font-family:inherit">➕ إضافة طالب</button>`;
-  const studentRows = students.map((s,i)=>`
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-      <div class="t-av" style="width:34px;height:34px;font-size:13px">${s.name.charAt(0)}</div>
-      <input class="form-input" style="flex:1" id="stu_${i}" value="${s.name}" oninput="document.getElementById('stu_${i}').previousElementSibling.textContent=this.value.charAt(0)||'؟'"/>
-      <input class="form-input" style="flex:1" id="stg_${i}" value="${s.grade}" placeholder="الصف..."/>
-    </div>`).join('');
-
-  return `
-  <div class="card" style="padding:18px;margin-bottom:12px">
-    <div class="section-title">🏫 إعدادات المدرسة</div>
-    <div class="form-group">
-      <label class="form-label">اسم المدرسة</label>
-      <input class="form-input" id="set_school" value="${schoolName}" readonly style="opacity:.7"/>
-    </div>
-    <button class="btn-success" onclick="saveSchoolNameOnly()">💾 حفظ اسم المدرسة</button>
-  </div>
-
-  <div class="card" style="padding:18px;margin-bottom:12px">
-    <div class="section-title">👨‍🏫 إعدادات المدرس</div>
-    <div class="form-group">
-      <label class="form-label">اسم المدرس</label>
-      <input class="form-input" id="set_teacher" value="${teacherName}"/>
-    </div>
-    <div class="form-group">
-      <label class="form-label">التخصص / المادة</label>
-      <input class="form-input" id="set_tsubject" value="${teacherSubject}"/>
-    </div>
-    <button class="btn-success" onclick="saveTeacher()">💾 حفظ بيانات المدرس</button>
-  </div>
-
-  <div class="card" style="padding:18px;margin-bottom:12px">
-    <div class="section-title">👦 أسماء الطلاب</div>
-    <div style="display:flex;gap:6px;font-size:11px;opacity:.45;margin-bottom:10px;padding:0 2px">
-      <div style="width:34px"></div>
-      <div style="flex:1">الاسم</div>
-      <div style="flex:1">الصف</div>
-    </div>
-    ${addBtn}
-    ${studentRows}
-    <button class="btn-success" onclick="saveStudents()">💾 حفظ أسماء الطلاب</button>
-  </div>
-
-  <div class="card" style="padding:18px;margin-bottom:12px">
-    <div class="section-title">🔐 أكواد أولياء الأمور</div>
-    <div style="font-size:12px;opacity:.5;margin-bottom:14px">شارك الكود مع ولي الأمر على واتساب — اضغط الكود لنسخه</div>
-    ${students.map(s=>`
-      <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:#212121;border-radius:8px;margin-bottom:8px">
-        <div class="t-av" style="width:34px;height:34px;font-size:13px">${s.name.charAt(0)}</div>
-        <div style="flex:1;font-weight:600;font-size:13px">${s.name}</div>
-        <div>
-          <div class="code-badge" onclick="copyCode('${s.code}',this)">${s.code}</div>
-          <div class="copy-hint" id="copied_${s.code}">اضغط للنسخ</div>
-        </div>
-      </div>`).join('')}
-  </div>
-
-  <div class="card" style="padding:18px;margin-bottom:12px">
-    <div class="section-title">📚 أسماء المعلمين لكل مادة</div>
-    ${addTeacherBtn}
-    ${teacherRows}
-    <button class="btn-success" onclick="saveTeachers()">💾 حفظ أسماء المعلمين</button>
-  </div>
-
-  <div class="card" style="padding:18px;margin-bottom:12px">
-    <div class="section-title">🔑 أكواد المواد السرية</div>
-    <div style="font-size:12px;opacity:.5;margin-bottom:14px">شارك كود كل مادة مع مدرسها فقط</div>
-    ${Object.keys(gradesDB).length === 0
-      ? `<div style="text-align:center;opacity:.4;padding:16px;font-size:13px">لا توجد مواد مضافة بعد</div>`
-      : Object.keys(gradesDB).map(sub => `
-      <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:#212121;border-radius:8px;margin-bottom:8px">
-        <div style="flex:1">
-          <div style="font-weight:700;font-size:13px">${sub}</div>
-          <div style="font-size:11px;opacity:.45;margin-top:2px">${teachers[sub]||'لم يحدد المدرس'}</div>
-        </div>
-        <div>
-          <div class="code-badge" style="background:linear-gradient(135deg,#0ea5e9,#06b6d4);letter-spacing:4px"
-            onclick="copyCode('${subjectCodes[sub]||'----'}',this)">${subjectCodes[sub]||'----'}</div>
-          <div class="copy-hint" id="copied_${subjectCodes[sub]||sub}">اضغط للنسخ</div>
-        </div>
-      </div>`).join('')}
-  </div>`;
-}
-
-function saveSchoolNameOnly(){
-  // School name is already saved in the main doc
-  toast('✅ تم حفظ اسم المدرسة');
-  saveToCloud();
-}
-
-function saveParent(){
-  parentName = document.getElementById('set_parent').value.trim() || parentName;
-  if(role==='parent'){ document.getElementById('sb-name').textContent=parentName; document.getElementById('sb-avatar').textContent=parentName.charAt(0); document.getElementById('h-avatar').textContent=parentName.charAt(0); }
-  toast('✅ تم حفظ اسم ولي الأمر');
-}
-
-function saveTeacher(){
-  teacherName    = document.getElementById('set_teacher').value.trim()  || teacherName;
-  teacherSubject = document.getElementById('set_tsubject').value.trim() || teacherSubject;
-  if(role==='teacher'){ document.getElementById('sb-name').textContent=teacherName; document.getElementById('sb-role').textContent=teacherSubject; document.getElementById('sb-avatar').textContent=teacherName.charAt(0); document.getElementById('h-avatar').textContent=teacherName.charAt(0); }
-  toast('✅ تم حفظ بيانات المدرس');
-}
-
-function saveStudents(){
-  students.forEach((s,i)=>{
-    const n=document.getElementById(`stu_${i}`)?.value.trim();
-    const g=document.getElementById(`stg_${i}`)?.value.trim();
-    if(n) s.name=n;
-    if(g) s.grade=g;
-  });
-  toast('✅ تم حفظ أسماء الطلاب');
-  saveToCloud();
-  navigateTo(role==='parent'?'p-settings':'t-settings');
-}
-function addStudent(){
-  const code = Math.floor(100000 + Math.random() * 900000).toString();
-  students.push({name:'', grade:'', code:code});
-  navigateTo(role==='parent'?'p-settings':'t-settings');
-}
-function addTeacher(){
-  const subject = prompt('اسم المادة:');
-  if(!subject) return;
-  teachers[subject] = '';
-  gradesDB[subject] = students.map(()=>({}));
-  subjectCodes[subject] = Math.floor(1000 + Math.random() * 9000).toString();
-  navigateTo(role==='parent'?'p-settings':'t-settings');
-}
-
-function saveTeachers(){
-  Object.keys(gradesDB).forEach(sub=>{
-    const el=document.getElementById('tch_'+sub.replace(/ /g,'_'));
-    if(el && el.value.trim()) teachers[sub]=el.value.trim();
-  });
-  toast('✅ تم حفظ أسماء المعلمين');
-}
-
-function copyCode(code, btn){
-  navigator.clipboard.writeText(code).catch(()=>{});
-  const hint = document.getElementById('copied_'+code);
-  if(hint){ hint.textContent='✅ تم النسخ!'; setTimeout(()=>hint.textContent='اضغط للنسخ',2000); }
-}
-
-// ============ WELCOME ============
-function showWelcome(){
-  if(!localStorage.getItem('welcomed')){
-    document.getElementById('welcomeModal').style.display='flex';
-  }
-}
-function closeWelcome(){
-  document.getElementById('welcomeModal').style.display='none';
-  localStorage.setItem('welcomed','1');
-}
-function switchWTab(id, el){
-  document.querySelectorAll('.w-tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.w-section').forEach(s=>s.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('wt-'+id).classList.add('active');
-}
-
-// ============ TOAST ============
+// ============ HELPERS ============
+function setSyncTxt(t){ document.getElementById('syncTxt').textContent = t; }
 function toast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2500);
-}
-
-// ============ PWA ============
-let deferredPrompt;
-window.addEventListener('beforeinstallprompt',e=>{
-  e.preventDefault(); deferredPrompt=e;
-  document.getElementById('installBar').classList.add('show');
-});
-document.getElementById('installBtn').addEventListener('click',async()=>{
-  if(deferredPrompt){await deferredPrompt.prompt();deferredPrompt=null;}
-  document.getElementById('installBar').classList.remove('show');
-});
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.getRegistrations().then(regs=>{
-    regs.forEach(r=>r.unregister());
-  });
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2500);
 }
 </script>
 </body>
