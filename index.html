@@ -435,8 +435,8 @@ footer{text-align:center;opacity:.2;font-size:11px;padding:16px 0 50px}
 
 <!-- ADMIN FLOATING BUTTONS -->
 <div class="admin-corner">
-  <div class="admin-btn blue" onclick="openAdmin('school')" title="دخول مدير المدرسة">🏫</div>
-  <div class="admin-btn" onclick="openAdmin('super')" title="دخول المدير العام">🌐</div>
+  <div class="admin-btn blue" onclick="openAdmin('dev')" title="إعدادات المطور">🛠️</div>
+  <div class="admin-btn" onclick="openAdmin('super')" title="المدير العام">🌐</div>
 </div>
 
 <!-- WELCOME MODAL -->
@@ -1513,26 +1513,34 @@ function copyCode(code, btn){
 
 // ============ ADMIN PANEL FUNCTIONS (MERGED) ============
 async function openAdmin(type){
-  // Hide main screens
   document.getElementById('schoolSelectorScreen').style.display = 'none';
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('appScreen').style.display = 'none';
+  document.getElementById('noSchoolScreen').style.display = 'none';
   
   const content = document.getElementById('adminContent');
   
-  if(type === 'super'){
-    // Check if already logged in
+  if(type === 'dev'){
+    // إعدادات المطور — يشوف أسامي المدارس وروابطها مباشرة
+    content.innerHTML = `
+      <h2 style="margin-bottom:20px">🛠️ إعدادات المطور</h2>
+      <div class="admin-card">
+        <h3 style="margin-bottom:12px">🏫 المدارس المسجلة وروابطها</h3>
+        <div style="font-size:12px;opacity:.5;margin-bottom:12px">اضغط الرابط لنسخه</div>
+        <div id="adminSchoolList"></div>
+      </div>
+    `;
+    loadAdminSchoolList();
+  } else if(type === 'super'){
+    // المدير العام — بكلمة مرور
     const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('firebaseReady', res, {once:true}); });
     await waitFb();
-    const snap = await window._getDoc(window._doc(window._db,'platformConfig','admin'));
-    if(ADMIN_PASS && snap.exists()){
-      // Already logged in or pass loaded
+    if(isSuperAdmin){
       renderAdminDashboard(true);
     } else {
-      // Show Login Form for Super Admin
       content.innerHTML = `
         <div style="max-width:360px;margin:40px auto;text-align:center">
-          <h2 style="margin-bottom:20px">🔐 المدير العام</h2>
+          <h2 style="margin-bottom:20px">🌐 المدير العام</h2>
           <input id="saPass" type="password" placeholder="كلمة المرور" class="admin-form" style="text-align:center"/>
           <button onclick="adminLoginSuper()" class="admin-btn-full">دخول</button>
           <p id="saErr" style="color:#ef4444;font-size:12px;margin-top:10px;display:none">كلمة المرور خاطئة</p>
@@ -1540,7 +1548,7 @@ async function openAdmin(type){
       `;
     }
   } else {
-    // School Admin
+    // مدير المدرسة
     content.innerHTML = `
       <div style="max-width:360px;margin:40px auto;text-align:center">
         <h2 style="margin-bottom:20px">🏫 مدير المدرسة</h2>
@@ -1622,20 +1630,15 @@ function renderAdminDashboard(superAdminMode){
   const content = document.getElementById('adminContent');
   if(superAdminMode){
     content.innerHTML = `
-      <h2 style="margin-bottom:20px">إدارة المنصة</h2>
+      <h2 style="margin-bottom:20px">🌐 المدير العام</h2>
       <div class="admin-card">
         <h3 style="margin-bottom:15px">➕ إضافة مدرسة جديدة</h3>
         <input id="newScName" class="admin-form" placeholder="اسم المدرسة"/>
         <input id="newScPass" type="password" class="admin-form" placeholder="كلمة مرور مدير المدرسة"/>
-        <button onclick="adminAddSchool()" class="admin-btn-full">إنشاء المدرسة</button>
-      </div>
-      <div class="admin-card">
-        <h3 style="margin-bottom:15px">🏫 المدارس المسجلة</h3>
-        <div style="font-size:12px;opacity:.5;margin-bottom:12px">اضغط على الرابط لنسخه وإرساله لمدير المدرسة</div>
-        <div id="adminSchoolList"></div>
+        <button onclick="adminAddSchool()" class="admin-btn-full">إنشاء المدرسة ✅</button>
+        <p id="addSchoolMsg" style="color:#22c55e;font-size:12px;margin-top:10px;display:none">✅ تمت إضافة المدرسة!</p>
       </div>
     `;
-    loadAdminSchoolList();
   } else {
     content.innerHTML = `
       <h2 style="margin-bottom:20px">إدارة المدرسة</h2>
@@ -1688,6 +1691,23 @@ function copySchoolLink(link){
   toast('✅ تم نسخ الرابط!');
 }
 
+async function loadAdminSchoolListSuper(){
+  const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('firebaseReady', res, {once:true}); });
+  await waitFb();
+  const snap = await window._getDoc(window._doc(window._db,'platformConfig','schools'));
+  const list = document.getElementById('adminSchoolListSuper');
+  if(!list) return;
+  if(snap.exists() && snap.data().list && snap.data().list.length > 0){
+    list.innerHTML = snap.data().list.map(s => `
+      <div class="admin-list-item">
+        <div style="flex:1;font-weight:700">🏫 ${s.name}</div>
+        <button onclick="adminDeleteSchool('${s.id}')" class="del-btn">🗑</button>
+      </div>`).join('');
+  } else {
+    list.innerHTML = '<div style="text-align:center;opacity:.4;padding:16px">لا توجد مدارس بعد</div>';
+  }
+}
+
 async function adminAddSchool(){
   const name = document.getElementById('newScName').value;
   const pass = document.getElementById('newScPass').value;
@@ -1697,10 +1717,11 @@ async function adminAddSchool(){
     await window._setDoc(window._doc(window._db, 'schools', id), { name, students:[], grades:{}, teachers:{}, allowedTeacherEmails:[], attendDB:[], announcements:[], homework:[], subjectCodes:{} });
     await window._setDoc(window._doc(window._db, 'schools', id, 'settings', 'admin'), { password: pass });
     await window._updateDoc(window._doc(window._db, 'platformConfig', 'schools'), { list: window._arrayUnion({ id, name, active:true }) });
-    toast('✅ تمت الإضافة');
+    toast('✅ تمت إضافة المدرسة');
     document.getElementById('newScName').value='';
     document.getElementById('newScPass').value='';
-    loadAdminSchoolList();
+    const msg = document.getElementById('addSchoolMsg');
+    if(msg){ msg.style.display='block'; setTimeout(()=>msg.style.display='none', 3000); }
   } catch(e){ toast('❌ خطأ'); }
 }
 
