@@ -354,7 +354,7 @@ footer{text-align:center;opacity:.2;font-size:11px;padding:16px 0 50px}
     </button>
   </div>
 
-  <div id="googleLoginError" style="color:var(--red);font-size:13px;margin-bottom:12px;display:none">❌ حساب Gmail غير مسجّل — تواصل مع المدير</div>
+  <div id="googleLoginError" style="color:var(--red);font-size:13px;margin-bottom:12px;display:none">❌ حدث خطأ في تسجيل الدخول، حاول مرة ثانية</div>
   <button style="background:none;border:none;color:#9a9a9a;font-size:13px;cursor:pointer;font-family:inherit;text-decoration:underline" onclick="backToLoginFromTeacher()">← رجوع</button>
 </div>
 
@@ -550,9 +550,8 @@ window.addEventListener('load', async()=>{
       if(el) el.textContent = schoolName;
       document.getElementById('sb-schoolname').textContent = '🏫 ' + schoolName;
     } else {
-      // لا يوجد شيء — اعرض شاشة الخطأ
-      document.getElementById('schoolSelectorScreen').style.display='none';
-      document.getElementById('noSchoolScreen').style.display='flex';
+      // لا يوجد ID — اعرض قائمة المدارس
+      loadSchoolsList();
     }
   }
   setTimeout(showWelcome, 800);
