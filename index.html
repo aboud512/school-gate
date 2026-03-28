@@ -65,26 +65,12 @@ window.dispatchEvent(new Event('firebaseReady'));
 body{font-family:'IBM Plex Sans Arabic','Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl;overflow-x:hidden}
 
 /* ===== ADMIN ICONS (FLOATING) ===== */
+/* HIDDEN BY DEFAULT - Can be triggered via ?admin=true */
 .admin-corner{position:fixed;bottom:18px;left:18px;z-index:999;display:flex;flex-direction:column;gap:8px;opacity:.6;transition:opacity .3s}
 .admin-corner:hover{opacity:1}
 .admin-btn{width:40px;height:40px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;transition:all .3s;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.3)}
 .admin-btn:hover{background:var(--accent);border-color:var(--accent);transform:scale(1.1);color:#fff}
 .admin-btn.blue:hover{background:var(--blue);border-color:var(--blue)}
-
-/* ===== SCHOOL SELECTOR ===== */
-#schoolSelectorScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:28px;background:linear-gradient(135deg,var(--bg) 0%, var(--bg) 60%, #000 100%)}
-.school-logo{font-size:60px;margin-bottom:12px}
-.school-title{font-size:22px;font-weight:900;margin-bottom:6px}
-.school-sub{font-size:13px;opacity:.45;margin-bottom:30px;text-align:center}
-.school-list{width:100%;max-width:340px;display:flex;flex-direction:column;gap:10px;max-height:50vh;overflow-y:auto;padding-bottom:20px}
-.school-card{background:rgba(255,255,255,0.04);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:16px;text-align:center;cursor:pointer;transition:all .25s;display:flex;align-items:center;gap:12px}
-.school-card:hover,.school-card.active{border-color:var(--accent);background:linear-gradient(135deg,#cc785c12,#d4956a28)}
-.school-icon{font-size:24px;background:var(--surface2);width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center}
-.school-name{flex:1;font-weight:700;font-size:14px;text-align:right}
-.code-input-wrap{width:100%;max-width:340px;position:relative;margin-bottom:16px;display:none}
-.code-input{width:100%;padding:16px 20px;border-radius:8px;border:2px solid rgba(217,119,6,0.3);background:rgba(255,255,255,0.04);backdrop-filter:blur(10px);color:var(--text);font-size:22px;font-weight:800;text-align:center;outline:none;font-family:inherit;letter-spacing:4px;direction:ltr}
-.code-input:focus{border-color:var(--accent)}
-.btn-small{font-size:12px;color:var(--muted);margin-top:15px;cursor:pointer;text-decoration:underline}
 
 /* ===== CODE SCREEN ===== */
 #codeScreen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:28px;background:linear-gradient(135deg,var(--bg) 0%, var(--bg) 60%, #000 100%)}
@@ -119,7 +105,7 @@ body{font-family:'IBM Plex Sans Arabic','Segoe UI',sans-serif;background:var(--b
 .login-btn{width:100%;max-width:400px;padding:16px;border-radius:8px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;font-size:17px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:0 8px 32px rgba(212,160,23,0.5);transition:all .2s}
 .login-btn:active{transform:scale(.97)}
 
-/* ===== ADMIN PANEL (MERGED) ===== */
+/* ===== ADMIN PANEL ===== */
 #adminScreen{display:none;min-height:100vh;background:var(--bg)}
 .admin-topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:50}
 .admin-title{font-weight:800;font-size:16px;flex:1}
@@ -130,6 +116,7 @@ body{font-family:'IBM Plex Sans Arabic','Segoe UI',sans-serif;background:var(--b
 .admin-btn-full{width:100%;padding:12px;border-radius:8px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:14px;font-weight:800;cursor:pointer}
 .admin-list-item{display:flex;align-items:center;gap:12px;padding:12px;background:var(--surface2);border-radius:8px;margin-bottom:8px;border:1px solid var(--border)}
 .admin-back-btn{background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:inherit;text-decoration:underline;margin-right:auto}
+.admin-link-copy{font-size:10px;color:var(--blue);cursor:pointer;text-decoration:underline;margin-right:auto}
 
 /* ======= APP SHELL ======= */
 #appScreen{display:none;min-height:100vh}
@@ -270,55 +257,24 @@ body{font-family:'IBM Plex Sans Arabic','Segoe UI',sans-serif;background:var(--b
 
 footer{text-align:center;opacity:.2;font-size:11px;padding:16px 0 50px}
 
-/* WELCOME MODAL */
-.welcome-bg{position:fixed;inset:0;background:#0009;z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
-.welcome-box{background:#1a1a1a;border:1px solid #2f2f2f;border-radius:16px;width:100%;max-width:400px;max-height:85vh;overflow-y:auto;direction:rtl}
-.welcome-header{padding:24px 24px 0;text-align:center}
-.welcome-icon{font-size:48px;margin-bottom:10px}
-.welcome-title{font-size:20px;font-weight:900;margin-bottom:4px}
-.welcome-sub{font-size:12px;opacity:.45;margin-bottom:20px}
-.welcome-tabs{display:flex;border-bottom:1px solid #2f2f2f;margin:0 24px}
-.w-tab{flex:1;padding:10px;text-align:center;font-size:13px;font-weight:700;color:#666;cursor:pointer;border-bottom:2px solid transparent;transition:.2s}
-.w-tab.active{color:#e8a87c;border-bottom-color:#e8a87c}
-.welcome-content{padding:20px 24px}
-.w-section{display:none}.w-section.active{display:block}
-.w-step{display:flex;gap:12px;margin-bottom:16px;align-items:flex-start}
-.w-num{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#cc785c,#e8a87c);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0;color:#000}
-.w-text{flex:1;font-size:13px;line-height:1.6;color:#ccc}
-.w-text strong{color:#e8a87c}
-.welcome-footer{padding:16px 24px 24px;display:flex;gap:10px}
-.w-skip{flex:1;padding:11px;border-radius:8px;border:1px solid #2f2f2f;background:transparent;color:#666;font-size:13px;cursor:pointer;font-family:inherit}
-.w-next{flex:2;padding:11px;border-radius:8px;border:none;background:linear-gradient(135deg,#cc785c,#e8a87c);color:#000;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit}
-
 .hidden{display:none!important}
 @media(max-width:380px){.students-grid{grid-template-columns:1fr}.status-btns{gap:3px}.s-btn{padding:5px 6px;font-size:10px}}
 </style>
 </head>
 <body>
 
-<!-- ========== SCHOOL SELECTOR ========== -->
-<div id="schoolSelectorScreen">
-  <div class="school-logo">🏫</div>
-  <div class="school-title">اختر مدرستك</div>
-  <div class="school-sub">مرحباً بك في منصة المدارس</div>
-  
-  <div id="schoolList" class="school-list">
-    <div style="text-align:center;opacity:.5;padding:20px">جاري تحميل المدارس...</div>
-  </div>
-
-  <div class="code-input-wrap" id="schoolCodeWrap">
-    <input class="code-input" id="schoolCodeInput" placeholder="كود المدرسة" maxlength="6"/>
-  </div>
-  
-  <button class="code-btn" id="selectSchoolBtn" style="display:none" onclick="submitSchoolCode()">تأكيد</button>
-  <div class="btn-small" onclick="showSchoolCodeInput()">لدي كود مدرسة؟</div>
+<!-- ========== ERROR SCREEN (NO SCHOOL ID) ========== -->
+<div id="errorScreen" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px;text-align:center">
+  <div style="font-size:60px;margin-bottom:20px">🤷‍♂️</div>
+  <h2 style="margin-bottom:10px">عفواً، لم يتم تحديد المدرسة</h2>
+  <p style="color:var(--muted);max-width:300px;margin:0 auto 20px">يبدو أن الرابط غير مكتمل. يرجى التواصل مع الإدارة للحصول على الرابط الصحيح للمدرسة.</p>
 </div>
 
 <!-- ========== LOGIN ========== -->
 <div id="loginScreen">
   <div class="login-logo">🏫</div>
   <div class="login-title" id="loginSchoolName">بوابة المدرسة</div>
-  <div class="login-sub">مدرسة ابن معتم</div>
+  <div class="login-sub">مرحباً بك</div>
   <div class="role-cards">
     <div class="role-card" id="rc-parent" onclick="selectRole('parent')">
       <div class="role-icon">👨‍👩‍👧</div>
@@ -365,7 +321,7 @@ footer{text-align:center;opacity:.2;font-size:11px;padding:16px 0 50px}
   <button class="code-back" onclick="backToLogin()">← رجوع</button>
 </div>
 
-<!-- ========== ADMIN PANEL (MERGED) ========== -->
+<!-- ========== ADMIN PANEL ========== -->
 <div id="adminScreen" style="display:none">
   <div class="admin-topbar">
     <div style="font-size:24px">🛠️</div>
@@ -426,44 +382,9 @@ footer{text-align:center;opacity:.2;font-size:11px;padding:16px 0 50px}
   <footer id="footerTxt" style="opacity:.25;font-size:11px;text-align:center;padding:16px 0 50px">مدارس الحكومة العراقية٢٠٢٦<br/><span style="opacity:.7">تطوير: عبد المللك مروان ياسين</span></footer>
 </div>
 
-<!-- ADMIN FLOATING BUTTONS -->
-<div class="admin-corner">
-  <div class="admin-btn blue" onclick="openAdmin('school')" title="دخول مدير المدرسة">🏫</div>
-  <div class="admin-btn" onclick="openAdmin('super')" title="دخول المدير العام">🌐</div>
-</div>
-
-<!-- WELCOME MODAL -->
-<div class="welcome-bg" id="welcomeModal" style="display:none">
-  <div class="welcome-box">
-    <div class="welcome-header">
-      <div class="welcome-icon">🏫</div>
-      <div class="welcome-title">أهلاً بك في منصة المدارس</div>
-      <div class="welcome-sub">دليل استخدام سريع</div>
-    </div>
-    <div class="welcome-tabs">
-      <div class="w-tab active" onclick="switchWTab('teacher',this)">👨‍🏫 المدرس</div>
-      <div class="w-tab" onclick="switchWTab('parent',this)">👨‍👩‍👧 ولي الأمر</div>
-    </div>
-    <div class="welcome-content">
-      <div class="w-section active" id="wt-teacher">
-        <div class="w-step"><div class="w-num">١</div><div class="w-text">اختر <strong>مدرستك</strong> من القائمة</div></div>
-        <div class="w-step"><div class="w-num">٢</div><div class="w-text">اختر <strong>مدرس</strong> واضغط دخول</div></div>
-        <div class="w-step"><div class="w-num">٣</div><div class="w-text">سجّل دخولك بـ <strong>حساب Gmail</strong></div></div>
-        <div class="w-step"><div class="w-num">٤</div><div class="w-text">من <strong>الإعدادات ⚙️</strong> أضف الطلاب والمواد</div></div>
-        <div class="w-step"><div class="w-num">٥</div><div class="w-text">أرسل <strong>كود الطالب</strong> لولي أمره</div></div>
-      </div>
-      <div class="w-section" id="wt-parent">
-        <div class="w-step"><div class="w-num">١</div><div class="w-text">اختر <strong>مدرسة ابنك</strong> من القائمة</div></div>
-        <div class="w-step"><div class="w-num">٢</div><div class="w-text">اختر <strong>ولي أمر</strong> واضغط دخول</div></div>
-        <div class="w-step"><div class="w-num">٣</div><div class="w-text">أدخل <strong>كود ابنك</strong> الذي أرسله المدرس</div></div>
-        <div class="w-step"><div class="w-num">٤</div><div class="w-text">تابع <strong>الدرجات والحضور والإعلانات</strong></div></div>
-      </div>
-    </div>
-    <div class="welcome-footer">
-      <button class="w-skip" onclick="closeWelcome()">تخطي</button>
-      <button class="w-next" onclick="closeWelcome()">فهمت ✅</button>
-    </div>
-  </div>
+<!-- ADMIN FLOATING BUTTONS (SCHOOL ADMIN ONLY) -->
+<div class="admin-corner" id="schoolAdminBtn" style="display:none">
+  <div class="admin-btn" onclick="openAdmin('school')" title="دخول مدير المدرسة">🏫</div>
 </div>
 
 <!-- TOAST -->
@@ -513,92 +434,37 @@ let allSchools = [];
 
 // ============ INIT ============
 window.addEventListener('load', async()=>{
-  const savedSchoolID = sessionStorage.getItem('activeSchoolID');
-  const savedSchoolName = sessionStorage.getItem('activeSchoolName');
-  if(savedSchoolID){
-    schoolID = savedSchoolID;
-    schoolName = savedSchoolName || schoolName;
+  const urlParams = new URLSearchParams(window.location.search);
+  const sid = urlParams.get('id');
+  
+  // CHECK FOR SUPER ADMIN ACCESS (Hidden Trigger)
+  const isAdminMode = urlParams.get('admin') === 'true';
+
+  if(isAdminMode){
+    openAdmin('super'); // Try to open super admin directly
+  } else if (sid) {
+    // NORMAL USER: LOAD SCHOOL FROM URL
+    schoolID = sid;
+    sessionStorage.setItem('activeSchoolID', sid);
     await loadSchoolName();
-    document.getElementById('schoolSelectorScreen').style.display='none';
     document.getElementById('loginScreen').style.display='flex';
-    const el = document.getElementById('loginSchoolName');
-    if(el) el.textContent = schoolName;
-    document.getElementById('sb-schoolname').textContent = '🏫 ' + schoolName;
+    document.getElementById('loginSchoolName').textContent = schoolName;
   } else {
-    loadSchoolsList();
+    // NO SCHOOL ID IN URL
+    document.getElementById('errorScreen').style.display='flex';
   }
-  // Show welcome modal first time
-  setTimeout(showWelcome, 800);
 });
 
-// ============ SCHOOL SELECTOR ============
-async function loadSchoolsList(){
-  const waitFirebase = () => new Promise(res => {
-    if(window._fbReady) res();
-    else window.addEventListener('firebaseReady', res, {once:true});
-  });
-  await waitFirebase();
-  try {
-    const snap = await window._getDoc(window._doc(window._db, 'platformConfig', 'schools'));
-    const listEl = document.getElementById('schoolList');
-    listEl.innerHTML = '';
-    
-    if(snap.exists() && snap.data().list && snap.data().list.length > 0){
-      snap.data().list.forEach(s => {
-        const div = document.createElement('div');
-        div.className = 'school-card';
-        div.innerHTML = `<div class="school-icon">🏫</div><div class="school-name">${s.name}</div><div style="font-size:10px;color:#666">اختر</div>`;
-        div.onclick = () => selectSchool(s.id, s.name);
-        listEl.appendChild(div);
-      });
-    } else {
-      listEl.innerHTML = '<div style="text-align:center;opacity:.5;padding:20px">لا توجد مدارس مسجلة حالياً</div>';
-    }
-  } catch(e){
-    console.error(e);
-    document.getElementById('schoolList').innerHTML = '<div style="text-align:center;opacity:.5;padding:20px">خطأ في تحميل القائمة</div>';
-  }
-}
-
-function showSchoolCodeInput(){
-  document.getElementById('schoolList').style.display='none';
-  document.getElementById('schoolCodeWrap').style.display='block';
-  document.getElementById('selectSchoolBtn').style.display='block';
-}
-
-async function submitSchoolCode(){
-  const code = document.getElementById('schoolCodeInput').value.trim();
-  if(!code) return;
-  try {
-    const snap = await window._getDoc(window._doc(window._db, 'schools', code));
-    if(snap.exists()){
-      selectSchool(code, snap.data().name);
-    } else {
-      toast('❌ كود المدرسة غير صحيح');
-    }
-  } catch(e){
-    toast('❌ خطأ في البحث');
-  }
-}
-
-async function selectSchool(id, name){
-  schoolID = id;
-  schoolName = name;
-  sessionStorage.setItem('activeSchoolID', id);
-  sessionStorage.setItem('activeSchoolName', name);
-  
-  document.getElementById('schoolSelectorScreen').style.display='none';
-  document.getElementById('loginScreen').style.display='flex';
-  document.getElementById('loginSchoolName').textContent = name;
-  document.getElementById('sb-schoolname').textContent = '🏫 ' + name;
-}
-
+// ============ SCHOOL NAME LOADER ============
 async function loadSchoolName(){
   if(!schoolID) return;
   try {
     const snap = await window._getDoc(window._doc(window._db, 'schools', schoolID));
     if(snap.exists()){
       schoolName = snap.data().name;
+    } else {
+      alert('المدرسة غير موجودة');
+      schoolID = null;
     }
   } catch(e){}
 }
@@ -1285,7 +1151,7 @@ function delAnn(i){ announcements.splice(i,1); saveToCloud(); navigateTo('t-anno
 
 function renderTHomework(){
   const list=homework.map((h,i)=>`
-    <div class="hw-item" style="border-right:4px solid ${h.urgent?'#ef4444':'#d4956a'};display:flex;align-items:center;gap:10px">
+    <div class="hw-item" style="border-right:4px solid ${h.urgent?'#ef4444':'#d4956a';display:flex;align-items:center;gap:10px">
       <div style="flex:1">
         <div class="hw-hdr"><span class="hw-sub">${h.subject}</span>
           <span class="hw-due ${h.urgent?'urgent':'normal'}">التسليم: ${h.due}</span></div>
@@ -1442,7 +1308,7 @@ function saveParent(){
 function saveTeacher(){
   teacherName    = document.getElementById('set_teacher').value.trim()  || teacherName;
   teacherSubject = document.getElementById('set_tsubject').value.trim() || teacherSubject;
-  if(role==='teacher'){ document.getElementById('sb-name').textContent=teacherName; document.getElementById('sb-role').textContent=teacherSubject; document.getElementById('sb-avatar').textContent=teacherName.charAt(0); document.getElementById('h-avatar').textContent=teacherName.charAt(0); }
+  if(role==='teacher'){ document.getElementById('sb-name').textContent=nerName; document.getElementById('sb-role').textContent=teacherSubject; document.getElementById('sb-avatar').textContent=teacherName.charAt(0); document.getElementById('h-avatar').textContent=teacherName.charAt(0); }
   toast('✅ تم حفظ بيانات المدرس');
 }
 
@@ -1485,80 +1351,46 @@ function copyCode(code, btn){
   if(hint){ hint.textContent='✅ تم النسخ!'; setTimeout(()=>hint.textContent='اضغط للنسخ',2000); }
 }
 
-// ============ ADMIN PANEL FUNCTIONS (MERGED) ============
+// ============ ADMIN PANEL FUNCTIONS ============
 async function openAdmin(type){
-  // Hide main screens
-  document.getElementById('schoolSelectorScreen').style.display = 'none';
-  document.getElementById('loginScreen').style.display = 'none';
-  document.getElementById('appScreen').style.display = 'none';
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('appScreen').style.display='none';
+  document.getElementById('errorScreen').style.display='none';
   
   const content = document.getElementById('adminContent');
   
   if(type === 'super'){
-    // Check if already logged in
-    const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('firebaseReady', res, {once:true}); });
-    await waitFb();
-    const snap = await window._getDoc(window._doc(window._db,'platformConfig','admin'));
-    if(ADMIN_PASS && snap.exists()){
-      // Already logged in or pass loaded
-      renderAdminDashboard(true);
-    } else {
-      // Show Login Form for Super Admin
-      content.innerHTML = `
-        <div style="max-width:360px;margin:40px auto;text-align:center">
-          <h2 style="margin-bottom:20px">🔐 المدير العام</h2>
-          <input id="saPass" type="password" placeholder="كلمة المرور" class="admin-form" style="text-align:center"/>
-          <button onclick="adminLoginSuper()" class="admin-btn-full">دخول</button>
-          <p id="saErr" style="color:#ef4444;font-size:12px;margin-top:10px;display:none">كلمة المرور خاطئة</p>
-        </div>
-      `;
-    }
+    // Show Login Form for Super Admin
+    content.innerHTML = `
+      <div style="max-width:360px;margin:40px auto;text-align:center">
+        <h2 style="margin-bottom:20px">🔐 المدير العام</h2>
+        <input id="saPass" type="password" placeholder="كلمة المرور" class="admin-form" style="text-align:center"/>
+        <button onclick="adminLoginSuper()" class="admin-btn-full">دخول</button>
+        <p id="saErr" style="color:#ef4444;font-size:12px;margin-top:10px;display:none">كلمة المرور خاطئة</p>
+      </div>
+    `;
   } else {
     // School Admin
     content.innerHTML = `
       <div style="max-width:360px;margin:40px auto;text-align:center">
         <h2 style="margin-bottom:20px">🏫 مدير المدرسة</h2>
-        <select id="adminSchoolSelect" class="admin-form" style="margin-bottom:10px"><option>جاري التحميل...</option></select>
         <input id="scPass" type="password" placeholder="رمز المدرسة" class="admin-form" style="text-align:center"/>
         <button onclick="adminLoginSchool()" class="admin-btn-full">دخول</button>
-        <p id="scErr" style="color:#ef4444;font-size:12px;margin-top:10px;display:none">بيانات خاطئة</p>
+        <p id="scErr" style="color:#ef4444;font-size:12px;margin-top:10px;display:none">الرمز خاطئ</p>
       </div>
     `;
-    loadSchoolsForAdmin();
   }
   
   document.getElementById('adminScreen').style.display = 'block';
 }
 
 function exitAdmin(){
-  document.getElementById('adminScreen').style.display = 'none';
-  // Return to last known state or home
+  document.getElementById('adminScreen').style.display='none';
   if(schoolID) {
-    document.getElementById('appScreen').style.display = 'block';
+    document.getElementById('loginScreen').style.display='flex';
   } else {
-    document.getElementById('schoolSelectorScreen').style.display = 'flex';
-    loadSchoolsList();
+    document.getElementById('errorScreen').style.display='flex';
   }
-}
-
-async function loadSchoolsForAdmin(){
-  const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('firebaseReady', res, {once:true}); });
-  await waitFb();
-  try {
-    const snap = await window._getDoc(window._doc(window._db,'platformConfig','schools'));
-    const sel = document.getElementById('adminSchoolSelect');
-    if(sel){
-      sel.innerHTML = '<option value="">-- اختر مدرسة --</option>';
-      if(snap.exists() && snap.data().list){
-        snap.data().list.forEach(s => {
-          const opt = document.createElement('option');
-          opt.value = s.id;
-          opt.textContent = s.name;
-          sel.appendChild(opt);
-        });
-      }
-    }
-  } catch(e){}
 }
 
 async function adminLoginSuper(){
@@ -1577,14 +1409,13 @@ async function adminLoginSuper(){
 }
 
 async function adminLoginSchool(){
-  const sid = document.getElementById('adminSchoolSelect').value;
   const pw = document.getElementById('scPass').value;
-  if(!sid){ return; }
+  if(!schoolID){ alert('خطأ: لا يوجد معرف مدرسة'); return; }
   try {
-    const snap = await window._getDoc(window._doc(window._db, 'schools', sid, 'settings', 'admin'));
+    const snap = await window._getDoc(window._doc(window._db, 'schools', schoolID, 'settings', 'admin'));
     if(snap.exists() && snap.data().password === pw){
       isSuperAdmin = false;
-      activeAdminSchoolID = sid;
+      activeAdminSchoolID = schoolID;
       renderAdminDashboard(false);
     } else {
       document.getElementById('scErr').style.display = 'block';
@@ -1598,13 +1429,13 @@ function renderAdminDashboard(superAdminMode){
     content.innerHTML = `
       <h2 style="margin-bottom:20px">إدارة المنصة</h2>
       <div class="admin-card">
-        <h3 style="margin-bottom:15px">➕ إضافة مدرسة</h3>
+        <h3 style="margin-bottom:15px">➕ إضافة مدرسة جديدة</h3>
         <input id="newScName" class="admin-form" placeholder="اسم المدرسة"/>
         <input id="newScPass" type="password" class="admin-form" placeholder="كلمة مرور المدير"/>
-        <button onclick="adminAddSchool()" class="admin-btn-full">إنشاء</button>
+        <button onclick="adminAddSchool()" class="admin-btn-full">إنشاء مدرسة</button>
       </div>
       <div class="admin-card">
-        <h3 style="margin-bottom:15px">🏫 المدارس</h3>
+        <h3 style="margin-bottom:15px">🏫 المدارس (${allSchools.length})</h3>
         <div id="adminSchoolList"></div>
       </div>
     `;
@@ -1625,7 +1456,7 @@ function renderAdminDashboard(superAdminMode){
         <div id="adminSubList"></div>
         <div style="margin-top:10px;display:flex;gap:10px">
            <input id="newSubName" class="admin-form" placeholder="المادة" style="flex:1"/>
-           <button onclick="adminAddSubject()" class="admin-btn-full" style="width:auto">إضافة</button>
+           <button onclick="addSubject()" class="admin-btn-full" style="width:auto">إضافة</button>
         </div>
       </div>
     `;
@@ -1638,13 +1469,25 @@ async function loadAdminSchoolList(){
   await waitFb();
   const snap = await window._getDoc(window._doc(window._db,'platformConfig','schools'));
   const list = document.getElementById('adminSchoolList');
+  allSchools = [];
   if(snap.exists() && snap.data().list){
-    list.innerHTML = snap.data().list.map(s => `
+    allSchools = snap.data().list;
+    list.innerHTML = allSchools.map(s => {
+      const link = `${window.location.origin}${window.location.pathname}?id=${s.id}`;
+      return `
       <div class="admin-list-item">
-        <div>🏫 ${s.name}</div>
-        <button onclick="adminDeleteSchool('${s.id}')" class="del-btn">🗑</button>
+        <div style="flex:1">
+          <div style="font-weight:bold">${s.name}</div>
+          <div style="font-size:10px;opacity:.6">ID: ${s.id}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
+           <a href="${link}" target="_blank" style="color:var(--blue);font-size:10px;text-decoration:none">🔗 نسخ الرابط</a>
+           <button onclick="adminDeleteSchool('${s.id}')" class="del-btn">🗑</button>
+        </div>
       </div>
     `).join('');
+  } else {
+    list.innerHTML = '<div style="opacity:.5">لا توجد مدارس</div>';
   }
 }
 
@@ -1667,7 +1510,7 @@ async function adminAddSchool(){
 async function adminDeleteSchool(id){
   if(!confirm('حذف المدرسة؟'))return;
   await window._deleteDoc(window._doc(window._db, 'schools', id));
-  // Note: removing from list requires reading list first, simplified here
+  // Note: removing from list requires reading list first, simplified here for brevity
   toast('🗑 تم الحذف');
   loadAdminSchoolList();
 }
@@ -1678,11 +1521,10 @@ async function loadAdminData(){
   const snap = await window._getDoc(window._doc(window._db, 'schools', activeAdminSchoolID));
   if(snap.exists()){
     const d = snap.data();
-    // Restore global vars for admin usage
     if(d.allowedTeacherEmails) allowedTeacherEmails = d.allowedTeacherEmails;
     if(d.teachers) teachers = d.teachers;
     if(d.grades) gradesDB = d.grades;
-    if(d.students) students = d.students; // Needed for subject creation
+    if(d.students) students = d.students;
     
     renderAdminTeacherList();
     renderAdminSubList();
@@ -1719,7 +1561,7 @@ function renderAdminSubList(){
     </div>
   `).join('');
 }
-function adminAddSubject(){
+function addSubject(){
   const n = document.getElementById('newSubName').value;
   if(n && !gradesDB[n]){
     gradesDB[n] = students.map(()=>({}));
