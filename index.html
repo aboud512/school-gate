@@ -432,6 +432,40 @@ footer{text-align:center;opacity:.2;font-size:11px;padding:16px 0 50px}
   <div class="admin-btn" onclick="openAdmin('super')" title="دخول المدير العام">🌐</div>
 </div>
 
+<!-- WELCOME MODAL -->
+<div class="welcome-bg" id="welcomeModal" style="display:none">
+  <div class="welcome-box">
+    <div class="welcome-header">
+      <div class="welcome-icon">🏫</div>
+      <div class="welcome-title">أهلاً بك في منصة المدارس</div>
+      <div class="welcome-sub">دليل استخدام سريع</div>
+    </div>
+    <div class="welcome-tabs">
+      <div class="w-tab active" onclick="switchWTab('teacher',this)">👨‍🏫 المدرس</div>
+      <div class="w-tab" onclick="switchWTab('parent',this)">👨‍👩‍👧 ولي الأمر</div>
+    </div>
+    <div class="welcome-content">
+      <div class="w-section active" id="wt-teacher">
+        <div class="w-step"><div class="w-num">١</div><div class="w-text">اختر <strong>مدرستك</strong> من القائمة</div></div>
+        <div class="w-step"><div class="w-num">٢</div><div class="w-text">اختر <strong>مدرس</strong> واضغط دخول</div></div>
+        <div class="w-step"><div class="w-num">٣</div><div class="w-text">سجّل دخولك بـ <strong>حساب Gmail</strong></div></div>
+        <div class="w-step"><div class="w-num">٤</div><div class="w-text">من <strong>الإعدادات ⚙️</strong> أضف الطلاب والمواد</div></div>
+        <div class="w-step"><div class="w-num">٥</div><div class="w-text">أرسل <strong>كود الطالب</strong> لولي أمره</div></div>
+      </div>
+      <div class="w-section" id="wt-parent">
+        <div class="w-step"><div class="w-num">١</div><div class="w-text">اختر <strong>مدرسة ابنك</strong> من القائمة</div></div>
+        <div class="w-step"><div class="w-num">٢</div><div class="w-text">اختر <strong>ولي أمر</strong> واضغط دخول</div></div>
+        <div class="w-step"><div class="w-num">٣</div><div class="w-text">أدخل <strong>كود ابنك</strong> الذي أرسله المدرس</div></div>
+        <div class="w-step"><div class="w-num">٤</div><div class="w-text">تابع <strong>الدرجات والحضور والإعلانات</strong></div></div>
+      </div>
+    </div>
+    <div class="welcome-footer">
+      <button class="w-skip" onclick="closeWelcome()">تخطي</button>
+      <button class="w-next" onclick="closeWelcome()">فهمت ✅</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -480,16 +514,21 @@ let allSchools = [];
 // ============ INIT ============
 window.addEventListener('load', async()=>{
   const savedSchoolID = sessionStorage.getItem('activeSchoolID');
+  const savedSchoolName = sessionStorage.getItem('activeSchoolName');
   if(savedSchoolID){
     schoolID = savedSchoolID;
+    schoolName = savedSchoolName || schoolName;
     await loadSchoolName();
     document.getElementById('schoolSelectorScreen').style.display='none';
     document.getElementById('loginScreen').style.display='flex';
-    document.getElementById('loginSchoolName').textContent = schoolName;
+    const el = document.getElementById('loginSchoolName');
+    if(el) el.textContent = schoolName;
+    document.getElementById('sb-schoolname').textContent = '🏫 ' + schoolName;
   } else {
     loadSchoolsList();
   }
-  // Hide admin buttons initially? No, keep them visible for access.
+  // Show welcome modal first time
+  setTimeout(showWelcome, 800);
 });
 
 // ============ SCHOOL SELECTOR ============
@@ -763,7 +802,7 @@ function buildSidebar(){
 }
 function openSidebar(){
   document.getElementById('sidebar').classList.add('open');
-  document.getElementById('overlay').addClass('open');
+  document.getElementById('overlay').classList.add('open');
   document.body.style.overflow='hidden';
 }
 function closeSidebar(){
@@ -1457,7 +1496,7 @@ async function openAdmin(type){
   
   if(type === 'super'){
     // Check if already logged in
-    const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('fbReady', res, {once:true}); });
+    const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('firebaseReady', res, {once:true}); });
     await waitFb();
     const snap = await window._getDoc(window._doc(window._db,'platformConfig','admin'));
     if(ADMIN_PASS && snap.exists()){
@@ -1503,7 +1542,7 @@ function exitAdmin(){
 }
 
 async function loadSchoolsForAdmin(){
-  const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('fbReady', res, {once:true}); });
+  const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('firebaseReady', res, {once:true}); });
   await waitFb();
   try {
     const snap = await window._getDoc(window._doc(window._db,'platformConfig','schools'));
@@ -1524,7 +1563,7 @@ async function loadSchoolsForAdmin(){
 
 async function adminLoginSuper(){
   const pw = document.getElementById('saPass').value;
-  const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('fbReady', res, {once:true}); });
+  const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('firebaseReady', res, {once:true}); });
   await waitFb();
   try {
     const snap = await window._getDoc(window._doc(window._db,'platformConfig','admin'));
@@ -1595,7 +1634,7 @@ function renderAdminDashboard(superAdminMode){
 }
 
 async function loadAdminSchoolList(){
-  const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('fbReady', res, {once:true}); });
+  const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('firebaseReady', res, {once:true}); });
   await waitFb();
   const snap = await window._getDoc(window._doc(window._db,'platformConfig','schools'));
   const list = document.getElementById('adminSchoolList');
@@ -1634,7 +1673,7 @@ async function adminDeleteSchool(id){
 }
 
 async function loadAdminData(){
-  const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('fbReady', res, {once:true}); });
+  const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('firebaseReady', res, {once:true}); });
   await waitFb();
   const snap = await window._getDoc(window._doc(window._db, 'schools', activeAdminSchoolID));
   if(snap.exists()){
