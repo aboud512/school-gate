@@ -99,10 +99,10 @@ body{font-family:'IBM Plex Sans Arabic','Segoe UI',sans-serif;background:var(--b
 .code-error{color:var(--red);font-size:13px;margin-bottom:10px;display:none}
 .code-error.show{display:block}
 
-/* code badge in teacher settings */
-.code-badge{display:inline-block;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;padding:4px 12px;border-radius:8px;font-weight:800;font-size:14px;letter-spacing:3px;cursor:pointer;transition:transform .15s}
-.code-badge:hover{transform:scale(1.05)}
-.copy-hint{font-size:10px;opacity:.45;margin-top:3px}
+/* code badge in teacher settings - FIXED FOR VISIBILITY */
+.code-badge{display:inline-block;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;padding:8px 20px;border-radius:12px;font-weight:800;font-size:20px;letter-spacing:3px;cursor:pointer;transition:transform .15s, box-shadow .2s; min-width:100px; text-align:center; box-shadow: 0 4px 10px rgba(204,120,92,0.3); border: 1px solid rgba(255,255,255,0.2);}
+.code-badge:hover{transform:scale(1.05); box-shadow: 0 6px 15px rgba(204,120,92,0.5);}
+.copy-hint{font-size:11px;opacity:.65;margin-top:6px; text-align:center;}
 
 /* ======= LOGIN ======= */
 #loginScreen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:28px;background:linear-gradient(135deg,var(--bg) 0%, var(--bg) 60%, #000 100%)}
