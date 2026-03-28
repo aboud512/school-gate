@@ -81,7 +81,7 @@ body{font-family:'IBM Plex Sans Arabic','Segoe UI',sans-serif;background:var(--b
 .school-card:hover,.school-card.active{border-color:var(--accent);background:linear-gradient(135deg,#cc785c12,#d4956a28)}
 .school-icon{font-size:24px;background:var(--surface2);width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center}
 .school-name{flex:1;font-weight:700;font-size:14px;text-align:right}
-.code-input-wrap{width:100%;max-width:340px;position:relative;margin-bottom:16px;display:none}
+#schoolCodeWrap{width:100%;max-width:340px;position:relative;margin-bottom:16px;display:none}
 .code-input{width:100%;padding:16px 20px;border-radius:8px;border:2px solid rgba(217,119,6,0.3);background:rgba(255,255,255,0.04);backdrop-filter:blur(10px);color:var(--text);font-size:22px;font-weight:800;text-align:center;outline:none;font-family:inherit;letter-spacing:4px;direction:ltr}
 .code-input:focus{border-color:var(--accent)}
 .btn-small{font-size:12px;color:var(--muted);margin-top:15px;cursor:pointer;text-decoration:underline}
@@ -99,10 +99,10 @@ body{font-family:'IBM Plex Sans Arabic','Segoe UI',sans-serif;background:var(--b
 .code-error{color:var(--red);font-size:13px;margin-bottom:10px;display:none}
 .code-error.show{display:block}
 
-/* code badge in teacher settings - FIXED FOR VISIBILITY */
-.code-badge{display:inline-block;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;padding:8px 20px;border-radius:12px;font-weight:800;font-size:20px;letter-spacing:3px;cursor:pointer;transition:transform .15s, box-shadow .2s; min-width:100px; text-align:center; box-shadow: 0 4px 10px rgba(204,120,92,0.3); border: 1px solid rgba(255,255,255,0.2);}
-.code-badge:hover{transform:scale(1.05); box-shadow: 0 6px 15px rgba(204,120,92,0.5);}
-.copy-hint{font-size:11px;opacity:.65;margin-top:6px; text-align:center;}
+/* code badge in teacher settings */
+.code-badge{display:inline-block;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;padding:4px 12px;border-radius:8px;font-weight:800;font-size:14px;letter-spacing:3px;cursor:pointer;transition:transform .15s}
+.code-badge:hover{transform:scale(1.05)}
+.copy-hint{font-size:10px;opacity:.45;margin-top:3px}
 
 /* ======= LOGIN ======= */
 #loginScreen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:28px;background:linear-gradient(135deg,var(--bg) 0%, var(--bg) 60%, #000 100%)}
