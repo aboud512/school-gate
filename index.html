@@ -688,7 +688,7 @@ async function processGoogleResult(result){
   const email = result.user.email;
   const name  = result.user.displayName;
   await loadFromCloud();
-  const allowed = allowedTeacherEmails.length === 0 || allowedTeacherEmails.includes(email);
+  const allowed = true; // السماح لأي حساب Google بالدخول
   if(!allowed){
     document.getElementById('googleLoginError').style.display='block';
     await window._signOut(window._auth);
