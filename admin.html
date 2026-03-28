@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8"/>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>لوحة تحكم المدير</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet"/>
@@ -9,7 +9,7 @@
 <!-- Firebase -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, deleteDoc, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC_bKThc6ZLaAXOo6jhm74AWDUYvX2Wi5w",
@@ -23,11 +23,17 @@ const firebaseConfig = {
 const fbApp = initializeApp(firebaseConfig);
 const db    = getFirestore(fbApp);
 
-window._db      = db;
-window._doc     = doc;
-window._getDoc  = getDoc;
-window._setDoc  = setDoc;
-window._fbReady = true;
+window._db        = db;
+window._doc       = doc;
+window._getDoc    = getDoc;
+window._setDoc    = setDoc;
+window._collection = collection;
+window._getDocs   = getDocs;
+window._deleteDoc = deleteDoc;
+window._updateDoc = updateDoc;
+window._arrayUnion = arrayUnion;
+window._arrayRemove = arrayRemove;
+window._fbReady   = true;
 window.dispatchEvent(new Event('fbReady'));
 </script>
 
@@ -60,17 +66,6 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
 .login-btn{width:100%;padding:13px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;transition:.2s}
 .login-btn:active{transform:scale(.97)}
 .login-err{color:var(--red);font-size:12px;margin-top:10px;display:none}
-
-/* SETUP */
-#setupScreen{display:none;align-items:center;justify-content:center;min-height:100vh}
-.setup-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:48px 40px;width:380px;text-align:center}
-.setup-icon{font-size:56px;margin-bottom:16px}
-.setup-title{font-size:20px;font-weight:800;margin-bottom:6px}
-.setup-sub{font-size:13px;color:var(--muted);margin-bottom:28px;line-height:1.6}
-.setup-input{width:100%;padding:13px 16px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:16px;font-family:inherit;outline:none;text-align:center;letter-spacing:4px;margin-bottom:12px;transition:.2s}
-.setup-input:focus{border-color:var(--accent)}
-.setup-btn{width:100%;padding:13px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit}
-.setup-err{color:var(--red);font-size:12px;margin-top:10px;display:none}
 
 /* DASHBOARD */
 #dashboard{display:none}
@@ -127,36 +122,59 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
 .loading-screen{display:flex;align-items:center;justify-content:center;padding:60px;gap:12px;color:var(--muted);font-size:14px}
 .spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* SCHOOL SELECTOR (NEW) */
+#schoolSelector{display:none;flex-direction:column;gap:10px;margin-bottom:20px}
+.school-select-label{font-size:12px;color:var(--muted);font-weight:700}
+.school-select-wrap{position:relative}
+.school-select-btn{width:100%;padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);text-align:right;font-family:inherit;font-size:14px;cursor:pointer}
+.school-select-btn:hover{border-color:var(--accent)}
+.school-dropdown{position:absolute;top:100%;right:0;width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;z-index:100;max-height:200px;overflow-y:auto;display:none;box-shadow:0 4px 12px rgba(0,0,0,0.5)}
+.school-dropdown.show{display:block}
+.school-opt{padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);transition:.2s}
+.school-opt:hover{background:var(--surface2)}
+.school-opt.active{background:var(--accent22);color:var(--accent)}
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
+<!-- LOGIN (SUPER ADMIN) -->
 <div id="loginScreen">
   <div class="login-box">
     <div class="login-icon">🔐</div>
-    <div class="login-title">لوحة تحكم المدير</div>
-    <div class="login-sub">أدخل كلمة المرور للدخول</div>
+    <div class="login-title">منصة المدارس - المدير العام</div>
+    <div class="login-sub">أدخل كلمة مرور المدير العام للدخول</div>
     <div class="pw-wrap">
       <input class="pw-input" id="pwInput" type="password" placeholder="••••••"
-        onkeydown="if(event.key==='Enter') checkPass()"/>
+        onkeydown="if(event.key==='Enter') checkSuperPass()"/>
     </div>
-    <button class="login-btn" onclick="checkPass()">دخول ←</button>
+    <button class="login-btn" onclick="checkSuperPass()">دخول ←</button>
     <div class="login-err" id="loginErr">❌ كلمة المرور خاطئة</div>
+    <div style="margin-top:20px;font-size:11px;opacity:.5;cursor:pointer;text-decoration:underline" onclick="showSchoolLogin()">أنا مدير مدرسة (ليس المدير العام)</div>
   </div>
 </div>
 
-<!-- SETUP - first time -->
-<div id="setupScreen" style="display:none;align-items:center;justify-content:center;min-height:100vh">
-  <div class="setup-box">
-    <div class="setup-icon">🔐</div>
-    <div class="setup-title">إعداد كلمة المرور</div>
-    <div class="setup-sub">أول مرة تفتح لوحة التحكم<br/>حدد كلمة مرور للمدير</div>
-    <input class="setup-input" id="newPw1" type="password" placeholder="كلمة المرور"/>
-    <input class="setup-input" id="newPw2" type="password" placeholder="أعد كتابتها" style="margin-top:8px"/>
-    <div class="setup-err" id="setupErr"></div>
-    <br/>
-    <button class="setup-btn" onclick="saveNewPass()">حفظ كلمة المرور ←</button>
+<!-- LOGIN (SCHOOL ADMIN) -->
+<div id="schoolLoginScreen" style="display:none;align-items:center;justify-content:center;min-height:100vh">
+  <div class="login-box">
+    <div class="login-icon">🏫</div>
+    <div class="login-title">دخول مدير المدرسة</div>
+    <div class="login-sub">اختر مدرستك وأدخل الرمز السري</div>
+    
+    <div class="form-group" style="text-align:right;margin-bottom:10px">
+      <label class="form-label">اختر المدرسة</label>
+      <select id="loginSchoolSelect" class="form-select" style="direction:rtl">
+        <option value="">جاري التحميل...</option>
+      </select>
+    </div>
+
+    <div class="pw-wrap">
+      <input class="pw-input" id="schoolPwInput" type="password" placeholder="رمز المدرسة"
+        onkeydown="if(event.key==='Enter') checkSchoolPass()"/>
+    </div>
+    <button class="login-btn" onclick="checkSchoolPass()">دخول ←</button>
+    <div class="login-err" id="schoolLoginErr">❌ البيانات خاطئة</div>
+    <div style="margin-top:20px;font-size:11px;opacity:.5;cursor:pointer;text-decoration:underline" onclick="showSuperLogin()">رجوع للمدير العام</div>
   </div>
 </div>
 
@@ -166,16 +184,27 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
   <!-- TOPBAR -->
   <div class="topbar">
     <div class="topbar-logo">🏫</div>
-    <div class="topbar-title">لوحة تحكم المدير</div>
+    <div class="topbar-title" id="topTitle">لوحة تحكم المدير العام</div>
     <div class="sync-dot"></div>
     <div class="sync-txt" id="syncTxt">متصل</div>
-    <button class="save-btn" onclick="saveAll()">💾 حفظ التغييرات</button>
-    <button class="logout-btn" onclick="goToPassword()">🔑 تغيير الرمز</button>
+    <button id="saveBtn" class="save-btn" onclick="saveAll()">💾 حفظ التغييرات</button>
     <button class="logout-btn" onclick="logout()">خروج</button>
   </div>
 
+  <!-- SCHOOL SELECTOR (FOR SUPER ADMIN) -->
+  <div id="schoolSelectorArea" style="padding:20px 24px 0;background:var(--surface);border-bottom:1px solid var(--border);display:none">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:700">أنت تصفح بوصفك: المدير العام</div>
+    <div style="font-size:13px;font-weight:600;color:var(--accent)">يمكنك إدارة جميع المدارس من الأسفل</div>
+  </div>
+
   <!-- TABS -->
-  <div class="tabs">
+  <div class="tabs" id="mainTabs">
+    <div class="tab active" onclick="switchTab('schools', this)">🏫 المدارس</div>
+    <div class="tab" onclick="switchTab('password', this)">🔑 كلمة المرور</div>
+  </div>
+  
+  <!-- SCHOOL ADMIN TABS (HIDDEN BY DEFAULT) -->
+  <div class="tabs" id="schoolAdminTabs" style="display:none">
     <div class="tab active" onclick="switchTab('teachers', this)">👨‍🏫 المدرسين</div>
     <div class="tab" onclick="switchTab('subjects', this)">📚 المواد</div>
     <div class="tab" onclick="switchTab('password', this)">🔑 كلمة المرور</div>
@@ -184,8 +213,31 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
   <!-- MAIN -->
   <div class="main">
 
-    <!-- TEACHERS SECTION -->
-    <div class="section active" id="sec-teachers">
+    <!-- SUPER ADMIN: SCHOOLS SECTION -->
+    <div class="section active" id="sec-schools">
+      <div class="card">
+        <div class="card-title">➕ إضافة مدرسة جديدة</div>
+        <div class="form-group">
+          <label class="form-label">اسم المدرسة</label>
+          <input class="form-input" id="newSchoolName" placeholder="مثال: مدرسة السلام الثانوية"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">كلمة مرور المدير (لهذه المدرسة)</label>
+          <input class="form-input" id="newSchoolPass" type="password" placeholder="رمز سري للمدير"/>
+        </div>
+        <button class="add-btn" onclick="addNewSchool()">➕ إنشاء مدرسة</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🏫 قائمة المدارس (<span id="schoolCount">0</span>)</div>
+        <div id="schoolsList">
+          <div class="loading-screen"><div class="spinner"></div> جاري التحميل...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCHOOL ADMIN: TEACHERS SECTION -->
+    <div class="section" id="sec-teachers">
       <div class="card">
         <div class="card-title">➕ إضافة مدرس جديد</div>
         <div class="form-row">
@@ -209,7 +261,7 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
       </div>
     </div>
 
-    <!-- SUBJECTS SECTION -->
+    <!-- SCHOOL ADMIN: SUBJECTS SECTION -->
     <div class="section" id="sec-subjects">
       <div class="card">
         <div class="card-title">➕ إضافة مادة جديدة</div>
@@ -234,10 +286,17 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
       </div>
     </div>
 
-    <!-- PASSWORD SECTION -->
+    <!-- PASSWORD SECTION (SHARED) -->
     <div class="section" id="sec-password">
       <div class="card">
-        <div class="card-title">🔑 تغيير كلمة مرور المدير</div>
+        <div class="card-title" id="passTitle">🔑 تغيير كلمة المرور</div>
+        <div id="superPassSection">
+          <p style="font-size:13px;color:var(--muted);margin-bottom:15px">أنت المدير العام. تغيير كلمة المرور هنا سيؤثر على دخولك للمنصة.</p>
+        </div>
+        <div id="schoolPassSection" style="display:none">
+          <p style="font-size:13px;color:var(--muted);margin-bottom:15px">تغيير كلمة المرور لمدير هذه المدرسة فقط.</p>
+        </div>
+        
         <div class="form-group">
           <label class="form-label">كلمة المرور الحالية</label>
           <input class="form-input" id="oldPw" type="password" placeholder="••••••"/>
@@ -263,7 +322,9 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:va
 
 <script>
 // ============ CONFIG ============
-let ADMIN_PASS = null; // تُحمل من Firebase
+let ADMIN_PASS = null; 
+let isSuperAdmin = false; // True if logged in as platform admin
+let activeSchoolID = null; // ID of the school currently being managed (if school admin)
 
 // ============ STATE ============
 let students = [];
@@ -274,68 +335,217 @@ let allowedTeacherEmails = [];
 let homework = [];
 let announcements = [];
 let attendDB = [];
+let allSchools = []; // List of all schools for Super Admin
 
-// ============ LOGIN ============
-async function checkPass(){
+// ============ LOGIN LOGIC ============
+async function checkSuperPass(){
   const pw = document.getElementById('pwInput').value;
   if(!ADMIN_PASS){
-    // لم تُحمل بعد — جرب مرة ثانية
     toast('⏳ جاري التحميل...');
-    await loadAdminPass();
+    await loadSuperAdminPass();
   }
   if(!ADMIN_PASS){
-    document.getElementById('loginScreen').style.display  = 'none';
-    document.getElementById('setupScreen').style.display  = 'flex';
+    // Should not happen if migration ran, but fallback
+    alert('لم يتم إعداد كلمة مرور للمدير العام بعد. تأكد من تشغيل migrate.html');
     return;
   }
   if(pw === ADMIN_PASS){
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('dashboard').style.display   = 'block';
-    loadData();
+    isSuperAdmin = true;
+    enterDashboard();
+    renderSchoolsList();
   } else {
     document.getElementById('loginErr').style.display = 'block';
     document.getElementById('pwInput').value = '';
   }
 }
-function logout(){
-  document.getElementById('dashboard').style.display   = 'none';
-  document.getElementById('loginScreen').style.display = 'flex';
-  document.getElementById('pwInput').value = '';
-}
-async function saveNewPass(){
-  const p1 = document.getElementById('newPw1').value.trim();
-  const p2 = document.getElementById('newPw2').value.trim();
-  const err = document.getElementById('setupErr');
-  if(!p1 || p1.length < 4){ err.style.display='block'; err.textContent='❌ كلمة المرور قصيرة جداً'; return; }
-  if(p1 !== p2){ err.style.display='block'; err.textContent='❌ كلمتا المرور لا تتطابقان'; return; }
-  await waitFb();
-  await window._setDoc(window._doc(window._db,'school','adminConfig'), { pass: p1 });
-  ADMIN_PASS = p1;
-  document.getElementById('setupScreen').style.display  = 'none';
-  document.getElementById('dashboard').style.display    = 'block';
-  loadData();
-  toast('✅ تم حفظ كلمة المرور');
-}
 
-// ============ FIREBASE ============
-const waitFb = () => new Promise(res => {
-  if(window._fbReady) res();
-  else window.addEventListener('fbReady', res, {once:true});
-});
-
-async function loadAdminPass(){
+async function loadSchoolsForSelect(){
+  const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('fbReady', res, {once:true}); });
   await waitFb();
   try {
-    const snap = await window._getDoc(window._doc(window._db,'school','adminConfig'));
+    const snap = await window._getDoc(window._doc(window._db,'platformConfig','schools'));
+    const sel = document.getElementById('loginSchoolSelect');
+    sel.innerHTML = '<option value="">-- اختر مدرسة --</option>';
+    if(snap.exists() && snap.data().list){
+      allSchools = snap.data().list;
+      allSchools.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = s.name;
+        sel.appendChild(opt);
+      });
+    }
+  } catch(e){}
+}
+
+async function checkSchoolPass(){
+  const schoolId = document.getElementById('loginSchoolSelect').value;
+  const pw = document.getElementById('schoolPwInput').value;
+  if(!schoolId){ toast('⚠️ اختر مدرسة'); return; }
+  
+  await loadSchoolsForSelect(); // Ensure list is loaded
+  
+  // Fetch school admin pass
+  try {
+    const snap = await window._getDoc(window._doc(window._db, 'schools', schoolId, 'settings', 'admin'));
+    if(snap.exists() && snap.data().password === pw){
+      isSuperAdmin = false;
+      activeSchoolID = schoolId;
+      enterDashboard();
+      loadData();
+    } else {
+      document.getElementById('schoolLoginErr').style.display = 'block';
+      document.getElementById('schoolPwInput').value = '';
+    }
+  } catch(e){
+    toast('❌ خطأ في الاتصال');
+  }
+}
+
+function showSchoolLogin(){
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('schoolLoginScreen').style.display = 'flex';
+  loadSchoolsForSelect();
+}
+function showSuperLogin(){
+  document.getElementById('schoolLoginScreen').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+}
+
+async function loadSuperAdminPass(){
+  const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('fbReady', res, {once:true}); });
+  await waitFb();
+  try {
+    const snap = await window._getDoc(window._doc(window._db,'platformConfig','admin'));
     if(snap.exists()) ADMIN_PASS = snap.data().pass;
   } catch(e){}
 }
 
+function enterDashboard(){
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('schoolLoginScreen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  
+  if(isSuperAdmin){
+    document.getElementById('topTitle').textContent = 'لوحة تحكم المدير العام';
+    document.getElementById('schoolSelectorArea').style.display = 'block';
+    document.getElementById('mainTabs').style.display = 'flex';
+    document.getElementById('schoolAdminTabs').style.display = 'none';
+    document.getElementById('superPassSection').style.display = 'block';
+    document.getElementById('schoolPassSection').style.display = 'none';
+    switchTab('schools', document.querySelector('#mainTabs .tab'));
+  } else {
+    document.getElementById('topTitle').textContent = 'لوحة تحكم مدير المدرسة';
+    document.getElementById('schoolSelectorArea').style.display = 'none';
+    document.getElementById('mainTabs').style.display = 'none';
+    document.getElementById('schoolAdminTabs').style.display = 'flex';
+    document.getElementById('superPassSection').style.display = 'none';
+    document.getElementById('schoolPassSection').style.display = 'block';
+    switchTab('teachers', document.querySelector('#schoolAdminTabs .tab'));
+  }
+}
+
+function logout(){
+  location.reload();
+}
+
+// ============ SUPER ADMIN: SCHOOLS ============
+async function renderSchoolsList(){
+  if(!isSuperAdmin) return;
+  const list = document.getElementById('schoolsList');
+  list.innerHTML = '';
+  
+  // Reload list to be safe
+  await loadSchoolsForSelect();
+  
+  if(allSchools.length === 0){
+    list.innerHTML = '<div class="empty">لا توجد مدارس بعد. أضف مدرسة جديدة.</div>';
+    return;
+  }
+  
+  list.innerHTML = allSchools.map(s => `
+    <div class="list-item">
+      <div class="item-avatar">🏫</div>
+      <div class="item-info">
+        <div class="item-name">${s.name}</div>
+        <div class="item-sub">ID: ${s.id}</div>
+      </div>
+      <button class="del-btn" onclick="deleteSchool('${s.id}')">🗑</button>
+    </div>
+  `).join('');
+  document.getElementById('schoolCount').textContent = allSchools.length;
+}
+
+async function addNewSchool(){
+  const name = document.getElementById('newSchoolName').value.trim();
+  const pass = document.getElementById('newSchoolPass').value.trim();
+  if(!name || !pass){ toast('⚠️ أدخل الاسم وكلمة المرور'); return; }
+  
+  const id = 'school_' + Date.now();
+  
+  try {
+    // 1. Create School Doc
+    await window._setDoc(window._doc(window._db, 'schools', id), {
+      name: name,
+      students: [],
+      grades: {},
+      teachers: {},
+      allowedTeacherEmails: [],
+      attendDB: [],
+      announcements: [],
+      homework: [],
+      subjectCodes: {}
+    });
+    
+    // 2. Create Admin Pass
+    await window._setDoc(window._doc(window._db, 'schools', id, 'settings', 'admin'), {
+      password: pass
+    });
+    
+    // 3. Add to Platform List
+    await window._updateDoc(window._doc(window._db, 'platformConfig', 'schools'), {
+      list: window._arrayUnion({ id: id, name: name, active: true })
+    });
+    
+    toast('✅ تم إنشاء المدرسة');
+    document.getElementById('newSchoolName').value = '';
+    document.getElementById('newSchoolPass').value = '';
+    renderSchoolsList();
+  } catch(e){
+    console.error(e);
+    toast('❌ فشل الإنشاء');
+  }
+}
+
+async function deleteSchool(id){
+  if(!confirm('هل أنت متأكد من حذف هذه المدرسة؟ سيتم حذف جميع بياناتها!')) return;
+  try {
+    // Delete doc
+    await window._deleteDoc(window._doc(window._db, 'schools', id));
+    // Remove from list
+    const schoolObj = allSchools.find(s => s.id === id);
+    if(schoolObj){
+      await window._updateDoc(window._doc(window._db, 'platformConfig', 'schools'), {
+        list: window._arrayRemove(schoolObj)
+      });
+    }
+    toast('🗑 تم حذف المدرسة');
+    renderSchoolsList();
+  } catch(e){
+    toast('❌ فشل الحذف');
+  }
+}
+
+// ============ SCHOOL ADMIN: DATA ============
 async function loadData(){
+  if(isSuperAdmin) return; // Super admin doesn't load a specific school data unless clicking a school (future feature)
+  if(!activeSchoolID) return;
+  
   setSyncTxt('جاري التحميل...');
+  const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('fbReady', res, {once:true}); });
   await waitFb();
   try {
-    const snap = await window._getDoc(window._doc(window._db, 'school', 'data'));
+    const snap = await window._getDoc(window._doc(window._db, 'schools', activeSchoolID));
     if(snap.exists()){
       const d = snap.data();
       if(d.students)             students             = d.students;
@@ -345,9 +555,7 @@ async function loadData(){
       if(d.subjectCodes)         subjectCodes         = d.subjectCodes;
       if(d.allowedTeacherEmails) allowedTeacherEmails = d.allowedTeacherEmails;
       if(d.attendDB)             attendDB             = d.attendDB;
-      // rebuild teachers
-      Object.keys(gradesDB).forEach(sub => { if(!teachers[sub]) teachers[sub]=''; });
-      if(d.teachers) Object.assign(teachers, d.teachers);
+      if(d.teachers)             Object.assign(teachers, d.teachers);
     }
     setSyncTxt('متصل');
     renderTeachers();
@@ -360,10 +568,14 @@ async function loadData(){
 }
 
 async function saveAll(){
+  if(isSuperAdmin){ toast('المدير العام يحفظ تلقائياً عند إنشاء المدارس'); return; }
+  if(!activeSchoolID) return;
+  
   setSyncTxt('جاري الحفظ...');
+  const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('fbReady', res, {once:true}); });
   await waitFb();
   try {
-    await window._setDoc(window._doc(window._db,'school','data'), {
+    await window._setDoc(window._doc(window._db,'schools', activeSchoolID), {
       students, grades:gradesDB, homework, announcements,
       subjectCodes, allowedTeacherEmails, attendDB, teachers
     });
@@ -379,10 +591,14 @@ async function saveAll(){
 function switchTab(id, el){
   document.querySelectorAll('.section').forEach(s=>{s.classList.remove('active');s.style.display='none';});
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  
+  // Handle both tab sets
+  document.querySelectorAll('#mainTabs .tab, #schoolAdminTabs .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  
   const sec = document.getElementById('sec-'+id);
   sec.classList.add('active');
   sec.style.display = 'block';
-  el.classList.add('active');
 }
 
 // ============ TEACHERS ============
@@ -468,26 +684,6 @@ function deleteSubject(sub){
   toast('🗑 تم حذف مادة ' + sub);
 }
 
-// ============ INIT ============
-// حمّل كلمة المرور عند فتح الصفحة
-window.addEventListener('load', async()=>{
-  await loadAdminPass();
-  if(!ADMIN_PASS){
-    document.getElementById('loginScreen').style.display  = 'none';
-    document.getElementById('setupScreen').style.display  = 'flex';
-  }
-});
-
-function goToPassword(){
-  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  const sec = document.getElementById('sec-password');
-  sec.classList.add('active');
-  sec.style.display = 'block';
-  const tabs = document.querySelectorAll('.tab');
-  if(tabs[2]) tabs[2].classList.add('active');
-}
-
 // ============ CHANGE PASSWORD ============
 async function changePassword(){
   const oldPw   = document.getElementById('oldPw').value.trim();
@@ -495,16 +691,35 @@ async function changePassword(){
   const newPw2  = document.getElementById('changePw2').value.trim();
   const err     = document.getElementById('changePassErr');
   err.style.display = 'none';
-  if(oldPw !== ADMIN_PASS){ err.style.display='block'; err.textContent='❌ كلمة المرور الحالية خاطئة'; return; }
-  if(!newPw1 || newPw1.length < 4){ err.style.display='block'; err.textContent='❌ كلمة المرور قصيرة جداً'; return; }
-  if(newPw1 !== newPw2){ err.style.display='block'; err.textContent='❌ كلمتا المرور لا تتطابقان'; return; }
-  await waitFb();
-  await window._setDoc(window._doc(window._db,'school','adminConfig'), { pass: newPw1 });
-  ADMIN_PASS = newPw1;
+  
+  if(isSuperAdmin){
+    if(oldPw !== ADMIN_PASS){ err.style.display='block'; err.textContent='❌ كلمة المرور الحالية خاطئة'; return; }
+    if(!newPw1 || newPw1.length < 4){ err.style.display='block'; err.textContent='❌ كلمة المرور قصيرة جداً'; return; }
+    if(newPw1 !== newPw2){ err.style.display='block'; err.textContent='❌ كلمتا المرور لا تتطابقان'; return; }
+    
+    const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('fbReady', res, {once:true}); });
+    await waitFb();
+    await window._setDoc(window._doc(window._db,'platformConfig','admin'), { pass: newPw1 });
+    ADMIN_PASS = newPw1;
+    toast('✅ تم تغيير كلمة المرور');
+  } else {
+    // School Admin
+    const snap = await window._getDoc(window._doc(window._db, 'schools', activeSchoolID, 'settings', 'admin'));
+    const currentPass = snap.exists() ? snap.data().password : null;
+    
+    if(oldPw !== currentPass){ err.style.display='block'; err.textContent='❌ كلمة المرور الحالية خاطئة'; return; }
+    if(!newPw1 || newPw1.length < 4){ err.style.display='block'; err.textContent='❌ كلمة المرور قصيرة جداً'; return; }
+    if(newPw1 !== newPw2){ err.style.display='block'; err.textContent='❌ كلمتا المرور لا تتطابقان'; return; }
+    
+    const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('fbFKReady', res, {once:true}); });
+    await waitFb();
+    await window._setDoc(window._doc(window._db,'schools', activeSchoolID, 'settings', 'admin'), { password: newPw1 });
+    toast('✅ تم تغيير كلمة المرور');
+  }
+  
   document.getElementById('oldPw').value = '';
   document.getElementById('changePw1').value = '';
   document.getElementById('changePw2').value = '';
-  toast('✅ تم تغيير كلمة المرور');
 }
 
 // ============ HELPERS ============
