@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>أداة ترقية المنصة (Migration Tool)</title>
+<script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore-compat.js"></script>
+<style>
+  body { font-family: sans-serif; padding: 20px; background: #111; color: #fff; direction: rtl; }
+  .container { max-width: 600px; margin: 0 auto; background: #222; padding: 20px; border-radius: 10px; border: 1px solid #444; }
+  h2 { color: #cc785c; margin-top: 0; }
+  .log { background: #000; padding: 10px; border-radius: 5px; font-family: monospace; height: 300px; overflow-y: auto; border: 1px solid #333; margin-top: 20px; font-size: 12px; }
+  .log p { margin: 5px 0; border-bottom: 1px solid #222; padding-bottom: 2px; }
+  .success { color: #4ade80; }
+  .error { color: #ef4444; }
+  .info { color: #38bdf8; }
+  button { background: #cc785c; color: #fff; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; width: 100%; margin-top: 10px; font-weight: bold; }
+  button:disabled { background: #555; cursor: not-allowed; }
+  .input-group { margin-bottom: 15px; }
+  label { display: block; margin-bottom: 5px; font-weight: bold; }
+  input { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #444; background: #333; color: #fff; box-sizing: border-box; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h2>🛠️ أداة ترقية المنصة إلى نسخة المدارس المتعددة</h2>
+  <p style="opacity: 0.7; font-size: 14px;">هذه الأداة ستنقل بياناتك الحالية إلى الهيكل الجديد وتحافظ على عمل التطبيقات القديمة.</p>
+  
+  <div class="input-group">
+    <label>كلمة مرور المدير العام الجديدة (للمنصة)</label>
+    <input type="password" id="superAdminPass" placeholder="أدخل كلمة مرور قوية للمدير العام">
+  </div>
+
+  <div class="input-group">
+    <label>اسم المدرسة الحالية (ليتم نقلها)</label>
+    <input type="text" id="currentSchoolName" value="مدرسة ابن المعتم" placeholder="اسم المدرسة">
+  </div>
+
+  <button id="startBtn" onclick="startMigration()">بدء الترحيل 🚀</button>
+
+  <div class="log" id="logBox"></div>
+</div>
+
+<script>
+// Firebase Config (نفس اللي في التطبيق القديم)
+const firebaseConfig = {
+  apiKey: "AIzaSyC_bKThc6ZLaAXOo6jhm74AWDUYvX2Wi5w",
+  authDomain: "school-gate-9508b.firebaseapp.com",
+  projectId: "school-gate-9508b",
+  storageBucket: "school-gate-9508b.firebasestorage.app",
+  messagingSenderId: "666124307661",
+  appId: "1:666124307661:web:0d7fe1bc9c20670b2f2d84"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+function log(msg, type = 'info') {
+  const box = document.getElementById('logBox');
+  const p = document.createElement('p');
+  p.className = type;
+  p.textContent = `> ${msg}`;
+  box.appendChild(p);
+  box.scrollTop = box.scrollHeight;
+}
+
+async function startMigration() {
+  const btn = document.getElementById('startBtn');
+  const pass = document.getElementById('superAdminPass').value.trim();
+  const schoolName = document.getElementById('currentSchoolName').value.trim();
+
+  if (!pass) { log('الرجاء إدخال كلمة مرور المدير العام', 'error'); return; }
+  if (!schoolName) { log('الرجاء إدخال اسم المدرسة', 'error'); return; }
+
+  btn.disabled = true;
+  btn.textContent = 'جاري العمل... يرجى الانتظار';
+
+  try {
+    log('جاري الاتصال بقاعدة البيانات...', 'info');
+
+    // 1. قراءة البيانات القديمة
+    log('جاري قراءة البيانات القديمة من /school/data ...', 'info');
+    const oldDataSnap = await db.collection('school').doc('data').get();
+    const oldConfigSnap = await db.collection('school').doc('adminConfig').get();
+
+    if (!oldDataSnap.exists) {
+      log('⚠️ لم يتم العثور على بيانات قديمة. ربما النظام جديد بالفعل؟', 'error');
+      // سنستمر لإنشاء المدير العام على أي حال
+    } else {
+      log('تم العثور على البيانات القديمة بنجاح.', 'success');
+    }
+
+    // 2. إنشاء معرف (ID) للمدرسة القديمة
+    const schoolId = 'legacy_school_' + Date.now(); // معرف فريد
+    log(`تم توليد معرف للمدرسة القديمة: ${schoolId}`, 'info');
+
+    // 3. إنشاء هيكل المدرسة الجديد
+    // المسار الجديد: /schools/{schoolId}/data
+    const newSchoolRef = db.collection('schools').doc(schoolId);
+    
+    if (oldDataSnap.exists) {
+      await newSchoolRef.set({
+        name: schoolName,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        // نسخ البيانات القديمة كما هي
+        ...oldDataSnap.data()
+      }, { merge: true });
+      log(`تم نقل بيانات الطلاب والدرجات إلى المدرسة: ${schoolName}`, 'success');
+    } else {
+      // أنشئ ملف فارغ إذا لم تكن بيانات
+      await newSchoolRef.set({ name: schoolName, students: [], grades: {} });
+      log(`تم إنشاء ملف مدرسة فارغ: ${schoolName}`, 'info');
+    }
+
+    // 4. نقل كلمة مرور المدير (إذا وجدت) إلى داخل المدرسة
+    if (oldConfigSnap.exists) {
+      const oldPass = oldConfigSnap.data().pass;
+      await newSchoolRef.collection('settings').doc('admin').set({
+        password: oldPass
+      });
+      log('تم نقل كلمة مرور المدير القديمة إلى إعدادات المدرسة.', 'success');
+    }
+
+    // 5. إنشاء حساب المدير العام للمنصة
+    // المسار: /platformConfig/admin
+    await db.collection('platformConfig').doc('admin').set({
+      password: pass
+    });
+    log('✅ تم إنشاء حساب المدير العام للمنصة بنجاح!', 'success');
+
+    // 6. تسجيل المدرسة في قائمة المنصة
+    // المسار: /platformConfig/schools
+    await db.collection('platformConfig').doc('schools').set({
+      list: firebase.firestore.FieldValue.arrayUnion({
+        id: schoolId,
+        name: schoolName,
+        active: true
+      })
+    });
+    log('✅ تم إضافة المدرسة إلى قائمة المدارس في المنصة.', 'success');
+
+    log('------------------------------------------------', 'info');
+    log('🎉 انتهى الترحيل بنجاح!', 'success');
+    log('ملاحظة هامة:', 'info');
+    log('1. البيانات القديمة في /school/data لم يتم حذفها (للحماية).', 'info');
+    log('2. التطبيقات القديمة ستعمل إذا قمنا بتحديثها لقراءة المسار الجديد.', 'info');
+    log('3. يمكنك الآن استخدام كود "المدير العام" في لوحة التحكم الجديدة.', 'info');
+    
+    btn.textContent = 'تم الترحيل بنجاح ✅';
+
+  } catch (error) {
+    console.error(error);
+    log(`حدث خطأ: ${error.message}`, 'error');
+    btn.disabled = false;
+    btn.textContent = 'حاول مرة أخرى';
+  }
+}
+</script>
+
+</body>
+</html>
