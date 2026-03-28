@@ -437,6 +437,7 @@ footer{text-align:center;opacity:.2;font-size:11px;padding:16px 0 50px}
 <div class="admin-corner">
   <div class="admin-btn blue" onclick="openAdmin('dev')" title="إعدادات المطور">🛠️</div>
   <div class="admin-btn" onclick="openAdmin('super')" title="المدير العام">🌐</div>
+  <div class="admin-btn" onclick="openAdmin('school')" title="مدير المدرسة">🏫</div>
 </div>
 
 <!-- WELCOME MODAL -->
@@ -1451,7 +1452,26 @@ function renderTeacherSettings(){
           <div class="copy-hint" id="copied_${subjectCodes[sub]||sub}">اضغط للنسخ</div>
         </div>
       </div>`).join('')}
+  </div>
+
+  <div class="card" style="padding:18px;margin-bottom:12px">
+    <div class="section-title">🔗 رابط مدرستك</div>
+    <div style="font-size:12px;opacity:.5;margin-bottom:14px">أرسل هذا الرابط للمدرسين وأولياء الأمور</div>
+    <div style="background:#212121;border-radius:8px;padding:12px 16px;font-size:12px;color:#38bdf8;direction:ltr;text-align:left;word-break:break-all;margin-bottom:10px;border:1px solid #2f2f2f">
+      ${getSchoolLink()}
+    </div>
+    <button onclick="copySchoolLinkFromSettings()" class="btn-success" style="margin-top:0">📋 نسخ الرابط</button>
   </div>`;
+}
+
+function getSchoolLink(){
+  return window.location.origin + window.location.pathname + '?id=' + schoolID;
+}
+
+function copySchoolLinkFromSettings(){
+  const link = getSchoolLink();
+  navigator.clipboard.writeText(link).catch(()=>{});
+  toast('✅ تم نسخ رابط المدرسة!');
 }
 
 function saveSchoolNameOnly(){
@@ -1521,16 +1541,21 @@ async function openAdmin(type){
   const content = document.getElementById('adminContent');
   
   if(type === 'dev'){
-    // إعدادات المطور — يشوف أسامي المدارس وروابطها مباشرة
-    content.innerHTML = `
-      <h2 style="margin-bottom:20px">🛠️ إعدادات المطور</h2>
-      <div class="admin-card">
-        <h3 style="margin-bottom:12px">🏫 المدارس المسجلة وروابطها</h3>
-        <div style="font-size:12px;opacity:.5;margin-bottom:12px">اضغط الرابط لنسخه</div>
-        <div id="adminSchoolList"></div>
-      </div>
-    `;
-    loadAdminSchoolList();
+    // إعدادات المطور — بكلمة مرور سرية
+    if(sessionStorage.getItem('devUnlocked')==='1'){
+      renderDevDashboard();
+    } else {
+      content.innerHTML = `
+        <div style="max-width:360px;margin:40px auto;text-align:center">
+          <h2 style="margin-bottom:20px">🛠️ إعدادات المطور</h2>
+          <div style="font-size:12px;opacity:.45;margin-bottom:16px">أول مرة؟ أدخل كلمة مرور جديدة وستُحفظ تلقائياً</div>
+          <input id="devPass" type="password" placeholder="كلمة مرور المطور" class="admin-form" style="text-align:center"
+            onkeydown="if(event.key==='Enter') loginDev()"/>
+          <button onclick="loginDev()" class="admin-btn-full">دخول</button>
+          <p id="devErr" style="color:#ef4444;font-size:12px;margin-top:10px;display:none"></p>
+        </div>
+      `;
+    }
   } else if(type === 'super'){
     // المدير العام — بكلمة مرور
     const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('firebaseReady', res, {once:true}); });
@@ -1689,6 +1714,67 @@ async function loadAdminSchoolList(){
 function copySchoolLink(link){
   navigator.clipboard.writeText(link).catch(()=>{});
   toast('✅ تم نسخ الرابط!');
+}
+
+async function loginDev(){
+  const pw = document.getElementById('devPass')?.value.trim();
+  if(!pw) return;
+  const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('firebaseReady', res, {once:true}); });
+  await waitFb();
+  try {
+    const snap = await window._getDoc(window._doc(window._db,'platformConfig','devConfig'));
+    if(!snap.exists()){
+      // أول مرة — احفظ الرمز
+      await window._setDoc(window._doc(window._db,'platformConfig','devConfig'), { pass: pw });
+      sessionStorage.setItem('devUnlocked','1');
+      renderDevDashboard();
+    } else if(snap.data().pass === pw){
+      sessionStorage.setItem('devUnlocked','1');
+      renderDevDashboard();
+    } else {
+      const err = document.getElementById('devErr');
+      if(err){ err.style.display='block'; err.textContent='❌ كلمة المرور خاطئة'; }
+    }
+  } catch(e){ console.log(e); }
+}
+
+async function changeDevPass(){
+  const oldPw = document.getElementById('devOldPass')?.value.trim();
+  const newPw = document.getElementById('devNewPass')?.value.trim();
+  const err = document.getElementById('devChangeErr');
+  if(!oldPw || !newPw){ if(err){err.style.display='block';err.textContent='❌ أدخل كلا الحقلين';} return; }
+  const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('firebaseReady', res, {once:true}); });
+  await waitFb();
+  const snap = await window._getDoc(window._doc(window._db,'platformConfig','devConfig'));
+  if(snap.exists() && snap.data().pass === oldPw){
+    await window._setDoc(window._doc(window._db,'platformConfig','devConfig'), { pass: newPw });
+    toast('✅ تم تغيير كلمة مرور المطور');
+    if(err) err.style.display='none';
+    document.getElementById('devOldPass').value='';
+    document.getElementById('devNewPass').value='';
+  } else {
+    if(err){ err.style.display='block'; err.textContent='❌ كلمة المرور الحالية خاطئة'; }
+  }
+}
+
+function renderDevDashboard(){
+  const content = document.getElementById('adminContent');
+  content.innerHTML = `
+    <h2 style="margin-bottom:20px">🛠️ إعدادات المطور</h2>
+    <div class="admin-card">
+      <h3 style="margin-bottom:12px">🏫 المدارس المسجلة وروابطها</h3>
+      <div style="font-size:12px;opacity:.5;margin-bottom:12px">اضغط الرابط لنسخه</div>
+      <div id="adminSchoolList"></div>
+    </div>
+    <div class="admin-card">
+      <h3 style="margin-bottom:12px">🔑 تغيير كلمة مرور المطور</h3>
+      <input id="devOldPass" type="password" class="admin-form" placeholder="كلمة المرور الحالية"/>
+      <input id="devNewPass" type="password" class="admin-form" placeholder="كلمة المرور الجديدة"/>
+      <p id="devChangeErr" style="color:#ef4444;font-size:12px;margin-bottom:8px;display:none"></p>
+      <button onclick="changeDevPass()" class="admin-btn-full">💾 حفظ كلمة المرور الجديدة</button>
+    </div>
+  `;
+  loadAdminSchoolList();
 }
 
 async function loadAdminSchoolListSuper(){
