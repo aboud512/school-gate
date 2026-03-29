@@ -314,6 +314,13 @@ footer{text-align:center;opacity:.2;font-size:11px;padding:16px 0 50px}
   <div class="btn-small" onclick="showSchoolCodeInput()">لدي كود مدرسة؟</div>
 </div>
 
+<!-- زر مؤقت للدخول السريع -->
+<div id="quickAccessBtn" style="position:fixed;bottom:20px;right:20px;z-index:999">
+  <button onclick="quickAccess()" style="background:linear-gradient(135deg,#e8854a,#f5a623);border:none;border-radius:50px;padding:12px 20px;color:#fff;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:0 4px 16px rgba(232,133,74,0.5)">
+    ⚡ دخول سريع
+  </button>
+</div>
+
 <!-- ========== NO SCHOOL SCREEN ========== -->
 <div id="noSchoolScreen" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:28px;background:linear-gradient(135deg,#0f0f0f,#000);text-align:center">
   <div style="font-size:64px;margin-bottom:16px">🤷</div>
@@ -602,6 +609,13 @@ async function loadSchoolsList(){
   }
 }
 
+function quickAccess(){
+  const id = prompt('أدخل ID المدرسة:');
+  if(id && id.trim()){
+    selectSchool(id.trim(), id.trim());
+  }
+}
+
 function showSchoolCodeInput(){
   document.getElementById('schoolList').style.display='none';
   document.getElementById('schoolCodeWrap').style.display='block';
@@ -786,15 +800,76 @@ async function checkRedirectResult(){
 checkRedirectResult();
 
 // ============ DATA OPS ============
+// ============ IndexedDB (offline storage) ============
+const DB_NAME = 'SchoolPlatformDB';
+const DB_VER  = 1;
+let idb = null;
+
+function openIDB(){
+  return new Promise((res, rej) => {
+    if(idb){ res(idb); return; }
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if(!db.objectStoreNames.contains('schools'))
+        db.createObjectStore('schools', {keyPath:'id'});
+    };
+    req.onsuccess = e => { idb = e.target.result; res(idb); };
+    req.onerror   = e => rej(e);
+  });
+}
+
+async function saveToIDB(id, data){
+  try {
+    const db = await openIDB();
+    const tx = db.transaction('schools','readwrite');
+    tx.objectStore('schools').put({id, ...data, _savedAt: Date.now()});
+  } catch(e){ console.log('IDB save error', e); }
+}
+
+async function loadFromIDB(id){
+  try {
+    const db = await openIDB();
+    return new Promise((res, rej) => {
+      const tx  = db.transaction('schools','readonly');
+      const req = tx.objectStore('schools').get(id);
+      req.onsuccess = e => res(e.target.result);
+      req.onerror   = e => rej(e);
+    });
+  } catch(e){ return null; }
+}
+
 async function loadFromCloud(){
-  if(!schoolID) return; 
+  if(!schoolID) return;
+
+  // أولاً: حاول تحمّل من IDB (offline)
+  const cached = await loadFromIDB(schoolID);
+  if(cached){
+    if(cached.students)             students.splice(0, students.length, ...cached.students);
+    if(cached.grades)               Object.assign(gradesDB, cached.grades);
+    if(cached.homework)             homework.splice(0, homework.length, ...cached.homework);
+    if(cached.announcements)        announcements.splice(0, announcements.length, ...cached.announcements);
+    if(cached.subjectCodes)         Object.assign(subjectCodes, cached.subjectCodes);
+    if(cached.allowedTeacherEmails) allowedTeacherEmails.splice(0, allowedTeacherEmails.length, ...cached.allowedTeacherEmails);
+    if(cached.attendDB)             attendDB.splice(0, attendDB.length, ...cached.attendDB);
+    if(cached.teachers)             Object.assign(teachers, cached.teachers);
+    const todayKey = getTodayDate();
+    const todayRec = attendDB.find(a => a.date === todayKey);
+    todayAttend = todayRec ? [...todayRec.statuses] : students.map(()=>'حاضر');
+    console.log('✅ تم التحميل من الذاكرة المحلية');
+  }
+
+  // ثانياً: حاول تحديث من Firebase (online)
   const waitFirebase = () => new Promise(res => {
     if(window._fbReady) res();
     else window.addEventListener('firebaseReady', res, {once:true});
   });
-  await waitFirebase();
   try {
-    const snap = await window._getDoc(window._doc(window._db, 'schools', schoolID));
+    await waitFirebase();
+    const snap = await Promise.race([
+      window._getDoc(window._doc(window._db, 'schools', schoolID)),
+      new Promise((_,rej) => setTimeout(()=>rej(new Error('timeout')), 5000))
+    ]);
     if(snap.exists()){
       const d = snap.data();
       if(d.students)             students.splice(0, students.length, ...d.students);
@@ -805,32 +880,41 @@ async function loadFromCloud(){
       if(d.allowedTeacherEmails) allowedTeacherEmails.splice(0, allowedTeacherEmails.length, ...d.allowedTeacherEmails);
       if(d.attendDB)             attendDB.splice(0, attendDB.length, ...d.attendDB);
       if(d.teachers)             Object.assign(teachers, d.teachers);
-      
       const todayKey = getTodayDate();
       const todayRec = attendDB.find(a => a.date === todayKey);
       todayAttend = todayRec ? [...todayRec.statuses] : students.map(()=>'حاضر');
+      // احفظ في IDB للاستخدام offline
+      await saveToIDB(schoolID, d);
+      console.log('✅ تم التحديث من Firebase');
     }
-  } catch(e){ console.log('خطأ في التحميل', e); }
+  } catch(e){ 
+    console.log('⚠️ لا يوجد نت — تم استخدام البيانات المحلية');
+  }
 }
 
 async function saveToCloud(){
   if(!schoolID) return;
+  const data = { 
+    name: schoolName, 
+    students, grades:gradesDB, homework, announcements, 
+    subjectCodes, allowedTeacherEmails, attendDB, teachers 
+  };
+  // احفظ محلياً دائماً
+  await saveToIDB(schoolID, data);
+  // حاول ترفع Firebase
   const waitFirebase = () => new Promise(res => {
     if(window._fbReady) res();
     else window.addEventListener('firebaseReady', res, {once:true});
   });
-  await waitFirebase();
   try {
-    const data = { 
-      name: schoolName, 
-      students, grades:gradesDB, homework, announcements, 
-      subjectCodes, allowedTeacherEmails, attendDB, teachers 
-    };
-    await window._setDoc(window._doc(window._db, 'schools', schoolID), data);
-    toast('☁️ تم الحفظ على Firebase');
+    await waitFirebase();
+    await Promise.race([
+      window._setDoc(window._doc(window._db, 'schools', schoolID), data),
+      new Promise((_,rej) => setTimeout(()=>rej(new Error('timeout')), 5000))
+    ]);
+    toast('☁️ تم الحفظ');
   } catch(e){
-    console.error(e);
-    toast('❌ فشل الحفظ');
+    toast('💾 تم الحفظ محلياً — سيتزامن لما يرجع النت');
   }
 }
 
