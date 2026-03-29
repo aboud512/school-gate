@@ -345,16 +345,32 @@ footer{text-align:center;opacity:.2;font-size:11px;padding:16px 0 50px}
 <div id="teacherLoginScreen" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:28px;background:linear-gradient(135deg,var(--bg),#000)">
   <div style="font-size:56px;margin-bottom:12px">👨‍🏫</div>
   <div style="font-size:22px;font-weight:900;margin-bottom:6px">دخول المدرس</div>
-  <div style="font-size:13px;opacity:.45;margin-bottom:32px;text-align:center">سجّل دخولك بحساب Gmail الخاص بك</div>
+  <div style="font-size:13px;opacity:.45;margin-bottom:24px;text-align:center">سجّل دخولك باسم المستخدم وكلمة المرور</div>
 
-  <div id="googleBtnWrap" style="margin-bottom:20px">
-    <button onclick="handleGoogleLogin()" style="display:flex;align-items:center;gap:12px;padding:13px 24px;border-radius:8px;border:1px solid #3f3f3f;background:#212121;color:#f8fafc;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">
-      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="22"/>
-      تسجيل الدخول بـ Google
+  <!-- تسجيل دخول بكلمة مرور (يشتغل offline) -->
+  <div style="width:100%;max-width:340px;margin-bottom:16px">
+    <input id="tchUsername" class="code-input" style="font-size:16px;letter-spacing:0;margin-bottom:10px;text-align:right" placeholder="اسم المستخدم"/>
+    <input id="tchPassword" type="password" class="code-input" style="font-size:16px;letter-spacing:0;text-align:right" placeholder="كلمة المرور"/>
+  </div>
+  <div id="tchLoginErr" style="color:var(--red);font-size:13px;margin-bottom:10px;display:none">❌ اسم المستخدم أو كلمة المرور خاطئة</div>
+  <button class="code-btn" onclick="loginWithPassword()">دخول ←</button>
+
+  <div style="display:flex;align-items:center;gap:10px;margin:16px 0;width:100%;max-width:340px">
+    <div style="flex:1;height:1px;background:#2f2f2f"></div>
+    <div style="font-size:12px;color:#555">أو</div>
+    <div style="flex:1;height:1px;background:#2f2f2f"></div>
+  </div>
+
+  <!-- تسجيل دخول بـ Google (يحتاج نت) -->
+  <div id="googleBtnWrap" style="margin-bottom:16px">
+    <button onclick="handleGoogleLogin()" style="display:flex;align-items:center;gap:12px;padding:13px 24px;border-radius:8px;border:1px solid #3f3f3f;background:#212121;color:#f8fafc;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20"/>
+      دخول بـ Google (يحتاج نت)
     </button>
   </div>
 
-  <div id="googleLoginError" style="color:var(--red);font-size:13px;margin-bottom:12px;display:none">❌ حدث خطأ في تسجيل الدخول، حاول مرة ثانية</div>
+  <div style="font-size:11px;color:#555;margin-bottom:12px;text-align:center">أول مرة؟ سجّل بـ Google ثم حدّد كلمة مرور من الإعدادات</div>
+  <div id="googleLoginError" style="color:var(--red);font-size:13px;margin-bottom:12px;display:none">❌ حدث خطأ في تسجيل الدخول</div>
   <button style="background:none;border:none;color:#9a9a9a;font-size:13px;cursor:pointer;font-family:inherit;text-decoration:underline" onclick="backToLoginFromTeacher()">← رجوع</button>
 </div>
 
@@ -669,6 +685,50 @@ function backToLoginFromTeacher(){
   document.getElementById('teacherLoginScreen').style.display='none';
   document.getElementById('loginScreen').style.display='flex';
 }
+async function loginWithPassword(){
+  const username = document.getElementById('tchUsername')?.value.trim();
+  const password = document.getElementById('tchPassword')?.value.trim();
+  const err = document.getElementById('tchLoginErr');
+  if(!username || !password){ err.style.display='block'; err.textContent='❌ أدخل اسم المستخدم وكلمة المرور'; return; }
+
+  // تحقق من localStorage أولاً (offline)
+  const localUsers = JSON.parse(localStorage.getItem('teacherAccounts_'+schoolID) || '{}');
+  if(localUsers[username] && localUsers[username].password === password){
+    teacherName = localUsers[username].name || username;
+    loggedInTeacherEmail = username;
+    err.style.display='none';
+    document.getElementById('teacherLoginScreen').style.display='none';
+    document.getElementById('appScreen').style.display='block';
+    applyRole();
+    return;
+  }
+
+  // تحقق من Firebase (online)
+  try {
+    const waitFirebase = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('firebaseReady', res, {once:true}); });
+    await waitFirebase();
+    const snap = await window._getDoc(window._doc(window._db, 'schools', schoolID, 'teachers', username));
+    if(snap.exists() && snap.data().password === password){
+      teacherName = snap.data().name || username;
+      loggedInTeacherEmail = username;
+      // احفظ محلياً للاستخدام offline
+      localUsers[username] = { password, name: teacherName };
+      localStorage.setItem('teacherAccounts_'+schoolID, JSON.stringify(localUsers));
+      err.style.display='none';
+      document.getElementById('teacherLoginScreen').style.display='none';
+      document.getElementById('appScreen').style.display='block';
+      applyRole();
+    } else {
+      err.style.display='block';
+      err.textContent='❌ اسم المستخدم أو كلمة المرور خاطئة';
+    }
+  } catch(e){
+    // offline و ما في بيانات محلية
+    err.style.display='block';
+    err.textContent='❌ لا يوجد اتصال بالإنترنت — سجّل مرة أولى بالنت';
+  }
+}
+
 async function handleGoogleLogin(){
   try {
     const provider = new window._GoogleAuthProvider();
@@ -696,6 +756,12 @@ async function processGoogleResult(result){
   loggedInTeacherEmail = email;
   loggedInTeacherName  = name;
   teacherName = name;
+  // احفظ Google login محلياً
+  const localUsers = JSON.parse(localStorage.getItem('teacherAccounts_'+schoolID) || '{}');
+  if(!localUsers[email]){
+    localUsers[email] = { name, password: null, fromGoogle: true };
+    localStorage.setItem('teacherAccounts_'+schoolID, JSON.stringify(localUsers));
+  }
   document.getElementById('teacherLoginScreen').style.display='none';
   document.getElementById('codeScreen').style.display='none';
   document.getElementById('loginScreen').style.display='none';
@@ -1454,6 +1520,20 @@ function renderTeacherSettings(){
   </div>
 
   <div class="card" style="padding:18px;margin-bottom:12px">
+    <div class="section-title">🔑 كلمة مرور الدخول بدون نت</div>
+    <div style="font-size:12px;opacity:.5;margin-bottom:14px">حدد كلمة مرور حتى تقدر تدخل بدون نت في المرات القادمة</div>
+    <div class="form-group">
+      <label class="form-label">اسم المستخدم</label>
+      <input class="form-input" id="set_offline_user" value="${loggedInTeacherEmail}" style="direction:ltr"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">كلمة المرور الجديدة</label>
+      <input class="form-input" id="set_offline_pass" type="password" placeholder="أدخل كلمة مرور"/>
+    </div>
+    <button class="btn-success" onclick="saveOfflinePass()">💾 حفظ كلمة المرور</button>
+  </div>
+
+  <div class="card" style="padding:18px;margin-bottom:12px">
     <div class="section-title">🔗 رابط مدرستك</div>
     <div style="font-size:12px;opacity:.5;margin-bottom:14px">أرسل هذا الرابط للمدرسين وأولياء الأمور</div>
     <div style="background:#212121;border-radius:8px;padding:12px 16px;font-size:12px;color:#38bdf8;direction:ltr;text-align:left;word-break:break-all;margin-bottom:10px;border:1px solid #2f2f2f">
@@ -1461,6 +1541,26 @@ function renderTeacherSettings(){
     </div>
     <button onclick="copySchoolLinkFromSettings()" class="btn-success" style="margin-top:0">📋 نسخ الرابط</button>
   </div>`;
+}
+
+async function saveOfflinePass(){
+  const username = document.getElementById('set_offline_user')?.value.trim();
+  const password = document.getElementById('set_offline_pass')?.value.trim();
+  if(!username || !password || password.length < 4){ toast('⚠️ كلمة المرور قصيرة'); return; }
+  // احفظ محلياً
+  const localUsers = JSON.parse(localStorage.getItem('teacherAccounts_'+schoolID) || '{}');
+  localUsers[username] = { ...localUsers[username], password, name: teacherName };
+  localStorage.setItem('teacherAccounts_'+schoolID, JSON.stringify(localUsers));
+  // احفظ على Firebase
+  try {
+    const waitFirebase = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('firebaseReady', res, {once:true}); });
+    await waitFirebase();
+    await window._setDoc(window._doc(window._db, 'schools', schoolID, 'teachers', username), {
+      password, name: teacherName, email: loggedInTeacherEmail
+    });
+  } catch(e){}
+  document.getElementById('set_offline_pass').value='';
+  toast('✅ تم حفظ كلمة المرور — تقدر الآن تدخل بدون نت');
 }
 
 function getSchoolLink(){
