@@ -314,12 +314,6 @@ footer{text-align:center;opacity:.2;font-size:11px;padding:16px 0 50px}
   <div class="btn-small" onclick="showSchoolCodeInput()">لدي كود مدرسة؟</div>
 </div>
 
-<!-- زر مؤقت للدخول السريع -->
-<div id="quickAccessBtn" style="position:fixed;bottom:20px;right:20px;z-index:999">
-  <button onclick="quickAccess()" style="background:linear-gradient(135deg,#e8854a,#f5a623);border:none;border-radius:50px;padding:12px 20px;color:#fff;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:0 4px 16px rgba(232,133,74,0.5)">
-    ⚡ دخول سريع
-  </button>
-</div>
 
 <!-- ========== NO SCHOOL SCREEN ========== -->
 <div id="noSchoolScreen" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:28px;background:linear-gradient(135deg,#0f0f0f,#000);text-align:center">
@@ -461,6 +455,7 @@ footer{text-align:center;opacity:.2;font-size:11px;padding:16px 0 50px}
   <div class="admin-btn blue" onclick="openAdmin('dev')" title="إعدادات المطور">🛠️</div>
   <div class="admin-btn" onclick="openAdmin('super')" title="المدير العام">🌐</div>
   <div class="admin-btn" onclick="openAdmin('school')" title="مدير المدرسة">🏫</div>
+  <div class="admin-btn" onclick="quickAccess()" title="دخول سريع (مؤقت)" style="background:#f5a623;border-color:#f5a623;color:#000">⚡</div>
 </div>
 
 <!-- WELCOME MODAL -->
