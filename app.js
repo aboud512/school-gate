@@ -1625,7 +1625,7 @@ function renderTeacherAttendance() {
         </div>
       </div>
     `;
-}
+  });
 
 function setAt(i, st, btn) {
   AppState.todayAttendance[i] = st;
@@ -1695,4 +1695,14 @@ function renderScheduleEditor() {
                 <td class="schedule-header">${p}</td>
                 ${days.map((_, di) => `
                   <td class="schedule-cell ${AppState.schedule.find(s => s.p===pi && s.d===di)?'has-class':''}">
-                    ${AppState.schedule.find(s => s.p===pi && s
+                    ${AppState.schedule.find(s => s.p===pi && s.d===di)?.subject || ''}
+                  </td>
+                ` ).join('')}
+              </tr>
+            ` ).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+} 
