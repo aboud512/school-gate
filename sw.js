@@ -2,7 +2,6 @@
 const CACHE_NAME = 'school-gate-v3';
 const OFFLINE_PAGE = './index.html';
 
-// الملفات اللي تنحفظ محلياً
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -88,7 +87,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // باقي الطلبات (صفحات الموقع) — Network First ثم Cache
+  // باقي الطلبات — Network First ثم Cache
   event.respondWith(
     fetch(event.request).then(res => {
       if (res && res.status === 200) {
@@ -112,6 +111,5 @@ self.addEventListener('sync', event => {
 });
 
 async function syncData() {
-  // يتعامل معه الكود الرئيسي عبر IndexedDB
   console.log('SW: مزامنة البيانات...');
 }
