@@ -9,7 +9,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="بوابة المدرسة"/>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700;800&display=swap" rel="stylesheet"/>
-<link rel="manifest" href="manifest.json"/>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, collection, getDocs, deleteDoc, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
@@ -257,6 +256,29 @@ body{font-family:'IBM Plex Sans Arabic','Segoe UI',sans-serif;background:var(--b
 .del-btn{background:none;border:none;color:#ef444488;cursor:pointer;font-size:16px;padding:0 4px;transition:color .2s}
 .del-btn:hover{color:#ef4444}
 
+/* STUDENTS MANAGER */
+.students-table{width:100%;border-collapse:collapse}
+.students-table th{padding:10px 12px;text-align:right;font-size:11px;font-weight:700;color:var(--muted);background:var(--surface2);border-bottom:1px solid var(--border)}
+.students-table td{padding:12px;font-size:13px;border-bottom:1px solid #1a1a1a}
+.students-table tr:hover td{background:#ffffff04}
+.badge-grade{padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;background:#38bdf818;color:#38bdf8;border:1px solid #38bdf833}
+.badge-section{padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;background:#a855f718;color:#a855f7;border:1px solid #a855f733}
+.sm-modal-bg{position:fixed;inset:0;background:#0009;z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
+.sm-modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;direction:rtl}
+.sm-modal-header{padding:20px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.sm-modal-title{font-size:16px;font-weight:800}
+.sm-modal-close{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1}
+.sm-modal-body{padding:20px 22px}
+.sm-form-group{margin-bottom:14px}
+.sm-form-label{font-size:12px;color:var(--muted);margin-bottom:5px;display:block}
+.sm-form-label span{color:var(--red)}
+.sm-input,.sm-select{width:100%;padding:10px 13px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:inherit;outline:none;transition:.2s}
+.sm-input:focus,.sm-select:focus{border-color:var(--accent)}
+.sm-select option{background:var(--surface2)}
+.sm-modal-footer{padding:16px 22px;border-top:1px solid var(--border);display:flex;gap:10px}
+.sm-btn-cancel{flex:1;padding:11px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:13px;cursor:pointer;font-family:inherit}
+.sm-btn-save{flex:2;padding:11px;border-radius:8px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit}
+
 /* TOAST */
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#212121;border:1px solid #22c55e55;color:#22c55e;padding:10px 22px;border-radius:8px;font-weight:700;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
@@ -348,7 +370,6 @@ footer{text-align:center;opacity:.2;font-size:11px;padding:16px 0 50px}
   <div style="font-size:22px;font-weight:900;margin-bottom:6px">دخول المدرس</div>
   <div style="font-size:13px;opacity:.45;margin-bottom:24px;text-align:center">سجّل دخولك باسم المستخدم وكلمة المرور</div>
 
-  <!-- تسجيل دخول بكلمة مرور (يشتغل offline) -->
   <div style="width:100%;max-width:340px;margin-bottom:16px">
     <input id="tchUsername" class="code-input" style="font-size:16px;letter-spacing:0;margin-bottom:10px;text-align:right" placeholder="اسم المستخدم"/>
     <input id="tchPassword" type="password" class="code-input" style="font-size:16px;letter-spacing:0;text-align:right" placeholder="كلمة المرور"/>
@@ -362,7 +383,6 @@ footer{text-align:center;opacity:.2;font-size:11px;padding:16px 0 50px}
     <div style="flex:1;height:1px;background:#2f2f2f"></div>
   </div>
 
-  <!-- تسجيل دخول بـ Google (يحتاج نت) -->
   <div id="googleBtnWrap" style="margin-bottom:16px">
     <button onclick="handleGoogleLogin()" style="display:flex;align-items:center;gap:12px;padding:13px 24px;border-radius:8px;border:1px solid #3f3f3f;background:#212121;color:#f8fafc;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">
       <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20"/>
@@ -398,7 +418,6 @@ footer{text-align:center;opacity:.2;font-size:11px;padding:16px 0 50px}
   </div>
   
   <div class="admin-main" id="adminContent">
-    <!-- Admin content injected here by JS -->
     <div style="text-align:center;padding:40px;color:var(--muted)">جاري التحميل...</div>
   </div>
 </div>
@@ -492,6 +511,85 @@ footer{text-align:center;opacity:.2;font-size:11px;padding:16px 0 50px}
   </div>
 </div>
 
+<!-- STUDENTS MODAL -->
+<div class="sm-modal-bg" id="studentModal" style="display:none">
+  <div class="sm-modal">
+    <div class="sm-modal-header">
+      <div class="sm-modal-title" id="studentModalTitle">إضافة طالب جديد</div>
+      <button class="sm-modal-close" onclick="closeStudentModal()">✕</button>
+    </div>
+    <div class="sm-modal-body">
+      <!-- رقم القيد -->
+      <div class="sm-form-group">
+        <label class="sm-form-label">رقم القيد <span>*</span></label>
+        <input class="sm-input" id="sm_qaid" placeholder="ST-2026-0001" style="direction:ltr"/>
+      </div>
+      <!-- اسم الطالب -->
+      <div class="sm-form-group">
+        <label class="sm-form-label">اسم الطالب <span>*</span></label>
+        <input class="sm-input" id="sm_name" placeholder="الاسم الكامل"/>
+      </div>
+      <!-- الصف الدراسي -->
+      <div class="sm-form-group">
+        <label class="sm-form-label">الصف الدراسي <span>*</span></label>
+        <select class="sm-select" id="sm_grade">
+          <option value="">اختر الصف</option>
+          <optgroup label="ابتدائي">
+            <option>الأول الابتدائي</option>
+            <option>الثاني الابتدائي</option>
+            <option>الثالث الابتدائي</option>
+            <option>الرابع الابتدائي</option>
+            <option>الخامس الابتدائي</option>
+            <option>السادس الابتدائي</option>
+          </optgroup>
+          <optgroup label="متوسط">
+            <option>الأول المتوسط</option>
+            <option>الثاني المتوسط</option>
+            <option>الثالث المتوسط</option>
+          </optgroup>
+          <optgroup label="إعدادي علمي">
+            <option>الرابع العلمي</option>
+            <option>الخامس العلمي</option>
+            <option>السادس العلمي</option>
+          </optgroup>
+          <optgroup label="إعدادي أدبي">
+            <option>الرابع الأدبي</option>
+            <option>الخامس الأدبي</option>
+            <option>السادس الأدبي</option>
+          </optgroup>
+        </select>
+      </div>
+      <!-- ✅ الشعبة — جديد -->
+      <div class="sm-form-group">
+        <label class="sm-form-label">الشعبة <span>*</span></label>
+        <select class="sm-select" id="sm_section">
+          <option value="">اختر الشعبة</option>
+          <option value="أ">أ</option>
+          <option value="ب">ب</option>
+          <option value="ج">ج</option>
+          <option value="د">د</option>
+          <option value="هـ">هـ</option>
+          <option value="و">و</option>
+        </select>
+      </div>
+      <!-- رقم الجوال -->
+      <div class="sm-form-group">
+        <label class="sm-form-label">رقم الجوال</label>
+        <input class="sm-input" id="sm_phone" placeholder="07XXXXXXXXX" style="direction:ltr"/>
+      </div>
+      <!-- اسم ولي الأمر -->
+      <div class="sm-form-group">
+        <label class="sm-form-label">اسم ولي الأمر</label>
+        <input class="sm-input" id="sm_parent" placeholder="اسم ولي الأمر"/>
+      </div>
+    </div>
+    <div class="sm-modal-footer">
+      <button class="sm-btn-cancel" onclick="closeStudentModal()">إلغاء</button>
+      <button class="sm-btn-save" onclick="saveStudentModal()">💾 حفظ</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -539,12 +637,10 @@ let allSchools = [];
 
 // ============ INIT ============
 window.addEventListener('load', async()=>{
-  // أولاً: تحقق من الـ URL ?id=school_xxx
   const urlParams = new URLSearchParams(window.location.search);
   const urlSchoolID = urlParams.get('id');
 
   if(urlSchoolID){
-    // رابط مخصص لمدرسة — ادخل مباشرة
     schoolID = urlSchoolID;
     sessionStorage.setItem('activeSchoolID', urlSchoolID);
     await loadSchoolName();
@@ -555,7 +651,6 @@ window.addEventListener('load', async()=>{
     if(el) el.textContent = schoolName;
     document.getElementById('sb-schoolname').textContent = '🏫 ' + schoolName;
   } else {
-    // لا يوجد ID في الرابط — تحقق من sessionStorage
     const savedSchoolID = sessionStorage.getItem('activeSchoolID');
     const savedSchoolName = sessionStorage.getItem('activeSchoolName');
     if(savedSchoolID){
@@ -568,7 +663,6 @@ window.addEventListener('load', async()=>{
       if(el) el.textContent = schoolName;
       document.getElementById('sb-schoolname').textContent = '🏫 ' + schoolName;
     } else {
-      // لا يوجد ID — اعرض قائمة المدارس
       loadSchoolsList();
     }
   }
@@ -663,6 +757,7 @@ const parentNav = [
   {id:'p-settings', icon:'⚙️', label:'الإعدادات'},
 ];
 const teacherNav = [
+  {id:'t-students', icon:'🎓', label:'إدارة الطلاب'},
   {id:'t-grades',   icon:'📝', label:'إدخال الدرجات'},
   {id:'t-attend',   icon:'📅', label:'تسجيل الحضور'},
   {id:'t-announce', icon:'📢', label:'إرسال الإعلانات'},
@@ -700,7 +795,6 @@ async function loginWithPassword(){
   const err = document.getElementById('tchLoginErr');
   if(!username || !password){ err.style.display='block'; err.textContent='❌ أدخل اسم المستخدم وكلمة المرور'; return; }
 
-  // تحقق من localStorage أولاً (offline)
   const localUsers = JSON.parse(localStorage.getItem('teacherAccounts_'+schoolID) || '{}');
   if(localUsers[username] && localUsers[username].password === password){
     teacherName = localUsers[username].name || username;
@@ -712,7 +806,6 @@ async function loginWithPassword(){
     return;
   }
 
-  // تحقق من Firebase (online)
   try {
     const waitFirebase = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('firebaseReady', res, {once:true}); });
     await waitFirebase();
@@ -720,7 +813,6 @@ async function loginWithPassword(){
     if(snap.exists() && snap.data().password === password){
       teacherName = snap.data().name || username;
       loggedInTeacherEmail = username;
-      // احفظ محلياً للاستخدام offline
       localUsers[username] = { password, name: teacherName };
       localStorage.setItem('teacherAccounts_'+schoolID, JSON.stringify(localUsers));
       err.style.display='none';
@@ -732,7 +824,6 @@ async function loginWithPassword(){
       err.textContent='❌ اسم المستخدم أو كلمة المرور خاطئة';
     }
   } catch(e){
-    // offline و ما في بيانات محلية
     err.style.display='block';
     err.textContent='❌ لا يوجد اتصال بالإنترنت — سجّل مرة أولى بالنت';
   }
@@ -756,16 +847,9 @@ async function processGoogleResult(result){
   const email = result.user.email;
   const name  = result.user.displayName;
   await loadFromCloud();
-  const allowed = true; // السماح لأي حساب Google بالدخول
-  if(!allowed){
-    document.getElementById('googleLoginError').style.display='block';
-    await window._signOut(window._auth);
-    return;
-  }
   loggedInTeacherEmail = email;
   loggedInTeacherName  = name;
   teacherName = name;
-  // احفظ Google login محلياً
   const localUsers = JSON.parse(localStorage.getItem('teacherAccounts_'+schoolID) || '{}');
   if(!localUsers[email]){
     localUsers[email] = { name, password: null, fromGoogle: true };
@@ -795,7 +879,6 @@ async function checkRedirectResult(){
 checkRedirectResult();
 
 // ============ DATA OPS ============
-// ============ IndexedDB (offline storage) ============
 const DB_NAME = 'SchoolPlatformDB';
 const DB_VER  = 1;
 let idb = null;
@@ -837,7 +920,6 @@ async function loadFromIDB(id){
 async function loadFromCloud(){
   if(!schoolID) return;
 
-  // أولاً: حاول تحمّل من IDB (offline)
   const cached = await loadFromIDB(schoolID);
   if(cached){
     if(cached.students)             students.splice(0, students.length, ...cached.students);
@@ -851,10 +933,8 @@ async function loadFromCloud(){
     const todayKey = getTodayDate();
     const todayRec = attendDB.find(a => a.date === todayKey);
     todayAttend = todayRec ? [...todayRec.statuses] : students.map(()=>'حاضر');
-    console.log('✅ تم التحميل من الذاكرة المحلية');
   }
 
-  // ثانياً: حاول تحديث من Firebase (online)
   const waitFirebase = () => new Promise(res => {
     if(window._fbReady) res();
     else window.addEventListener('firebaseReady', res, {once:true});
@@ -878,9 +958,7 @@ async function loadFromCloud(){
       const todayKey = getTodayDate();
       const todayRec = attendDB.find(a => a.date === todayKey);
       todayAttend = todayRec ? [...todayRec.statuses] : students.map(()=>'حاضر');
-      // احفظ في IDB للاستخدام offline
       await saveToIDB(schoolID, d);
-      console.log('✅ تم التحديث من Firebase');
     }
   } catch(e){ 
     console.log('⚠️ لا يوجد نت — تم استخدام البيانات المحلية');
@@ -894,9 +972,7 @@ async function saveToCloud(){
     students, grades:gradesDB, homework, announcements, 
     subjectCodes, allowedTeacherEmails, attendDB, teachers 
   };
-  // احفظ محلياً دائماً
   await saveToIDB(schoolID, data);
-  // حاول ترفع Firebase
   const waitFirebase = () => new Promise(res => {
     if(window._fbReady) res();
     else window.addEventListener('firebaseReady', res, {once:true});
@@ -994,6 +1070,7 @@ function navigateTo(id){
   if(id==='p-attend')   mc.innerHTML=renderParentAttend();
   if(id==='p-news')     mc.innerHTML=renderParentNews();
   if(id==='p-homework') mc.innerHTML=renderParentHw();
+  if(id==='t-students') mc.innerHTML=renderStudentsManager();
   if(id==='t-grades'){  mc.innerHTML=renderTGrades(); setTimeout(onSubjectChange,0); }
   if(id==='t-attend')   mc.innerHTML=renderTAttend();
   if(id==='t-announce') mc.innerHTML=renderTAnnounce();
@@ -1009,7 +1086,7 @@ function studentSelectorHTML(){
     <div class="st-av" style="background:linear-gradient(135deg,#cc785c,#e8a87c)">${s.name.charAt(0)}</div>
     <div>
       <div style="font-weight:800;font-size:15px">${s.name}</div>
-      <div style="font-size:12px;opacity:.5;margin-top:2px">${s.grade}</div>
+      <div style="font-size:12px;opacity:.5;margin-top:2px">${s.grade}${s.section?' — شعبة '+s.section:''}</div>
     </div>
     <div style="margin-right:auto;font-size:11px;background:#d4956a22;color:#e8a87c;padding:4px 10px;border-radius:8px;border:1px solid #d4956a44">🔐 مسجّل دخول</div>
   </div>`;
@@ -1169,7 +1246,7 @@ function renderTGrades(){
       <div class="student-row" style="flex-direction:column;align-items:stretch;gap:0;padding:14px;margin-bottom:10px">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
           <div class="t-av">${s.name.charAt(0)}</div>
-          <div class="s-name-t">${s.name}</div>
+          <div class="s-name-t">${s.name}${s.section?` <span style="font-size:11px;opacity:.5">شعبة ${s.section}</span>`:''}</div>
           <div id="gpreview_r1_${i}" style="margin-right:auto;font-size:11px"></div>
         </div>
         <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:8px">
@@ -1196,7 +1273,7 @@ function renderTGrades(){
       <div class="student-row" style="flex-direction:column;align-items:stretch;gap:0;padding:14px;margin-bottom:10px">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
           <div class="t-av">${s.name.charAt(0)}</div>
-          <div class="s-name-t">${s.name}</div>
+          <div class="s-name-t">${s.name}${s.section?` <span style="font-size:11px;opacity:.5">شعبة ${s.section}</span>`:''}</div>
           <div id="gpreview_r2_${i}" style="margin-right:auto;font-size:11px"></div>
         </div>
         <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:8px">
@@ -1378,7 +1455,10 @@ function renderTAttend(){
     const st=todayAttend[i];
     return `<div class="attend-row">
       <div class="t-av">${s.name.charAt(0)}</div>
-      <div class="attend-name">${s.name}</div>
+      <div class="attend-name">
+        ${s.name}
+        ${s.section?`<span style="font-size:10px;color:#a855f7;margin-right:6px;background:#a855f722;padding:2px 7px;border-radius:6px;border:1px solid #a855f733">شعبة ${s.section}</span>`:''}
+      </div>
       <div class="status-btns">
         <button class="s-btn sb-p ${st==='حاضر'?'on':''}" onclick="setAt(${i},'حاضر',this)">حاضر</button>
         <button class="s-btn sb-a ${st==='غائب'?'on':''}" onclick="setAt(${i},'غائب',this)">غائب</button>
@@ -1521,6 +1601,15 @@ function renderTeacherSettings(){
       <div class="t-av" style="width:34px;height:34px;font-size:13px">${s.name.charAt(0)}</div>
       <input class="form-input" style="flex:1" id="stu_${i}" value="${s.name}" oninput="document.getElementById('stu_${i}').previousElementSibling.textContent=this.value.charAt(0)||'؟'"/>
       <input class="form-input" style="flex:1" id="stg_${i}" value="${s.grade}" placeholder="الصف..."/>
+      <select class="form-input" style="flex:.6;padding:10px 6px" id="sts_${i}">
+        <option value="">الشعبة</option>
+        <option value="أ" ${s.section==='أ'?'selected':''}>أ</option>
+        <option value="ب" ${s.section==='ب'?'selected':''}>ب</option>
+        <option value="ج" ${s.section==='ج'?'selected':''}>ج</option>
+        <option value="د" ${s.section==='د'?'selected':''}>د</option>
+        <option value="هـ" ${s.section==='هـ'?'selected':''}>هـ</option>
+        <option value="و" ${s.section==='و'?'selected':''}>و</option>
+      </select>
     </div>`).join('');
 
   return `
@@ -1552,6 +1641,7 @@ function renderTeacherSettings(){
       <div style="width:34px"></div>
       <div style="flex:1">الاسم</div>
       <div style="flex:1">الصف</div>
+      <div style="flex:.6">الشعبة</div>
     </div>
     ${addBtn}
     ${studentRows}
@@ -1564,7 +1654,10 @@ function renderTeacherSettings(){
     ${students.map(s=>`
       <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:#212121;border-radius:8px;margin-bottom:8px">
         <div class="t-av" style="width:34px;height:34px;font-size:13px">${s.name.charAt(0)}</div>
-        <div style="flex:1;font-weight:600;font-size:13px">${s.name}</div>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:13px">${s.name}</div>
+          ${s.section?`<div style="font-size:10px;color:#a855f7;margin-top:1px">شعبة ${s.section}</div>`:''}
+        </div>
         <div>
           <div class="code-badge" onclick="copyCode('${s.code}',this)">${s.code}</div>
           <div class="copy-hint" id="copied_${s.code}">اضغط للنسخ</div>
@@ -1626,11 +1719,9 @@ async function saveOfflinePass(){
   const username = document.getElementById('set_offline_user')?.value.trim();
   const password = document.getElementById('set_offline_pass')?.value.trim();
   if(!username || !password || password.length < 4){ toast('⚠️ كلمة المرور قصيرة'); return; }
-  // احفظ محلياً
   const localUsers = JSON.parse(localStorage.getItem('teacherAccounts_'+schoolID) || '{}');
   localUsers[username] = { ...localUsers[username], password, name: teacherName };
   localStorage.setItem('teacherAccounts_'+schoolID, JSON.stringify(localUsers));
-  // احفظ على Firebase
   try {
     const waitFirebase = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('firebaseReady', res, {once:true}); });
     await waitFirebase();
@@ -1674,8 +1765,10 @@ function saveStudents(){
   students.forEach((s,i)=>{
     const n=document.getElementById(`stu_${i}`)?.value.trim();
     const g=document.getElementById(`stg_${i}`)?.value.trim();
+    const sec=document.getElementById(`sts_${i}`)?.value;
     if(n) s.name=n;
     if(g) s.grade=g;
+    s.section = sec || s.section || '';
   });
   toast('✅ تم حفظ أسماء الطلاب');
   saveToCloud();
@@ -1683,7 +1776,7 @@ function saveStudents(){
 }
 function addStudent(){
   const code = Math.floor(100000 + Math.random() * 900000).toString();
-  students.push({name:'', grade:'', code:code});
+  students.push({name:'', grade:'', section:'', code:code});
   navigateTo(role==='parent'?'p-settings':'t-settings');
 }
 function addTeacher(){
@@ -1709,7 +1802,7 @@ function copyCode(code, btn){
   if(hint){ hint.textContent='✅ تم النسخ!'; setTimeout(()=>hint.textContent='اضغط للنسخ',2000); }
 }
 
-// ============ ADMIN PANEL FUNCTIONS (MERGED) ============
+// ============ ADMIN PANEL FUNCTIONS ============
 async function openAdmin(type){
   document.getElementById('schoolSelectorScreen').style.display = 'none';
   document.getElementById('loginScreen').style.display = 'none';
@@ -1719,7 +1812,6 @@ async function openAdmin(type){
   const content = document.getElementById('adminContent');
   
   if(type === 'dev'){
-    // إعدادات المطور — بكلمة مرور سرية
     if(sessionStorage.getItem('devUnlocked')==='1'){
       renderDevDashboard();
     } else {
@@ -1735,7 +1827,6 @@ async function openAdmin(type){
       `;
     }
   } else if(type === 'super'){
-    // المدير العام — بكلمة مرور
     const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('firebaseReady', res, {once:true}); });
     await waitFb();
     if(isSuperAdmin){
@@ -1751,7 +1842,6 @@ async function openAdmin(type){
       `;
     }
   } else {
-    // مدير المدرسة
     content.innerHTML = `
       <div style="max-width:360px;margin:40px auto;text-align:center">
         <h2 style="margin-bottom:20px">🏫 مدير المدرسة</h2>
@@ -1769,7 +1859,6 @@ async function openAdmin(type){
 
 function exitAdmin(){
   document.getElementById('adminScreen').style.display = 'none';
-  // Return to last known state or home
   if(schoolID) {
     document.getElementById('appScreen').style.display = 'block';
   } else {
@@ -1902,7 +1991,6 @@ async function loginDev(){
   try {
     const snap = await window._getDoc(window._doc(window._db,'platformConfig','devConfig'));
     if(!snap.exists()){
-      // أول مرة — احفظ الرمز
       await window._setDoc(window._doc(window._db,'platformConfig','devConfig'), { pass: pw });
       sessionStorage.setItem('devUnlocked','1');
       renderDevDashboard();
@@ -1955,23 +2043,6 @@ function renderDevDashboard(){
   loadAdminSchoolList();
 }
 
-async function loadAdminSchoolListSuper(){
-  const waitFb = () => new Promise(res => { if(window._fbReady) res(); else window.addEventListener('firebaseReady', res, {once:true}); });
-  await waitFb();
-  const snap = await window._getDoc(window._doc(window._db,'platformConfig','schools'));
-  const list = document.getElementById('adminSchoolListSuper');
-  if(!list) return;
-  if(snap.exists() && snap.data().list && snap.data().list.length > 0){
-    list.innerHTML = snap.data().list.map(s => `
-      <div class="admin-list-item">
-        <div style="flex:1;font-weight:700">🏫 ${s.name}</div>
-        <button onclick="adminDeleteSchool('${s.id}')" class="del-btn">🗑</button>
-      </div>`).join('');
-  } else {
-    list.innerHTML = '<div style="text-align:center;opacity:.4;padding:16px">لا توجد مدارس بعد</div>';
-  }
-}
-
 async function adminAddSchool(){
   const name = document.getElementById('newScName').value;
   const pass = document.getElementById('newScPass').value;
@@ -1992,7 +2063,6 @@ async function adminAddSchool(){
 async function adminDeleteSchool(id){
   if(!confirm('حذف المدرسة؟'))return;
   await window._deleteDoc(window._doc(window._db, 'schools', id));
-  // Note: removing from list requires reading list first, simplified here
   toast('🗑 تم الحذف');
   loadAdminSchoolList();
 }
@@ -2003,12 +2073,10 @@ async function loadAdminData(){
   const snap = await window._getDoc(window._doc(window._db, 'schools', activeAdminSchoolID));
   if(snap.exists()){
     const d = snap.data();
-    // Restore global vars for admin usage
     if(d.allowedTeacherEmails) allowedTeacherEmails = d.allowedTeacherEmails;
     if(d.teachers) teachers = d.teachers;
     if(d.grades) gradesDB = d.grades;
-    if(d.students) students = d.students; // Needed for subject creation
-    
+    if(d.students) students.splice(0, students.length, ...d.students);
     renderAdminTeacherList();
     renderAdminSubList();
   }
@@ -2066,6 +2134,151 @@ async function saveAdminData(){
     students, grades:gradesDB, teachers, allowedTeacherEmails, attendDB, announcements, homework, subjectCodes
   });
   toast('☁️ تم الحفظ');
+}
+
+// ============ STUDENTS MANAGER ============
+let studentFilter = {search:'', grade:'', section:''};
+let editStudentIndex = -1;
+
+function renderStudentsManager(){
+  const grades   = [...new Set(students.map(s=>s.grade).filter(Boolean))].sort();
+  const sections = [...new Set(students.map(s=>s.section).filter(Boolean))].sort();
+  const gradeOpts   = `<option value="">كل الصفوف</option>` + grades.map(g=>`<option value="${g}" ${studentFilter.grade===g?'selected':''}>${g}</option>`).join('');
+  const sectionOpts = `<option value="">كل الشعب</option>` + sections.map(s=>`<option value="${s}" ${studentFilter.section===s?'selected':''}>${s}</option>`).join('');
+
+  let filtered = students.filter(s => {
+    const matchSearch  = !studentFilter.search  || s.name?.includes(studentFilter.search)  || s.qaid?.includes(studentFilter.search);
+    const matchGrade   = !studentFilter.grade   || s.grade   === studentFilter.grade;
+    const matchSection = !studentFilter.section || s.section === studentFilter.section;
+    return matchSearch && matchGrade && matchSection;
+  });
+
+  const rows = filtered.map(s => {
+    const i = students.indexOf(s);
+    return `<tr>
+      <td style="color:var(--muted);font-size:11px;direction:ltr">${s.qaid||'—'}</td>
+      <td><div style="display:flex;align-items:center;gap:8px">
+        <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0">${s.name?.charAt(0)||'؟'}</div>
+        <div><div style="font-weight:600">${s.name||'—'}</div>${s.parent?`<div style="font-size:11px;color:var(--muted)">${s.parent}</div>`:''}</div>
+      </div></td>
+      <td><span class="badge-grade">${s.grade||'—'}</span></td>
+      <td><span class="badge-section">${s.section||'—'}</span></td>
+      <td style="direction:ltr;font-size:12px;color:var(--muted)">${s.phone||'—'}</td>
+      <td><span class="code-badge" onclick="copyCode('${s.code}',this)" style="font-size:11px;padding:3px 8px">${s.code}</span></td>
+      <td>
+        <button onclick="editStudent(${i})" style="background:none;border:none;color:#38bdf8;cursor:pointer;font-size:14px;padding:4px">✏️</button>
+        <button onclick="deleteStudent(${i})" style="background:none;border:none;color:#ef444488;cursor:pointer;font-size:14px;padding:4px">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  return `
+  <div class="card" style="padding:18px;margin-bottom:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-size:18px;font-weight:900">🎓 إدارة الطلاب</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">عرض وإدارة بيانات الطلاب</div>
+      </div>
+      <button onclick="openAddStudent()" style="padding:10px 18px;border-radius:8px;border:none;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">➕ إضافة طالب</button>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+      <input class="sm-input" style="flex:2;min-width:140px" placeholder="🔍 بحث بالاسم أو رقم القيد..." 
+        oninput="studentFilter.search=this.value;document.getElementById('mainContent').innerHTML=renderStudentsManager();" value="${studentFilter.search}"/>
+      <select class="sm-select" style="flex:1;min-width:110px" 
+        onchange="studentFilter.grade=this.value;document.getElementById('mainContent').innerHTML=renderStudentsManager();">
+        ${gradeOpts}
+      </select>
+      <select class="sm-select" style="flex:.8;min-width:90px" 
+        onchange="studentFilter.section=this.value;document.getElementById('mainContent').innerHTML=renderStudentsManager();">
+        ${sectionOpts}
+      </select>
+    </div>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div style="overflow-x:auto">
+      <table class="students-table">
+        <thead><tr>
+          <th>رقم القيد</th><th>الطالب</th><th>الصف</th><th>الشعبة</th><th>الجوال</th><th>كود ولي الأمر</th><th>إجراءات</th>
+        </tr></thead>
+        <tbody>${rows || `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--muted)">لا يوجد طلاب بعد — اضغط إضافة طالب</td></tr>`}</tbody>
+      </table>
+    </div>
+    <div style="padding:12px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)">
+      إجمالي: ${filtered.length} طالب
+    </div>
+  </div>`;
+}
+
+function genQaid(){
+  const year = new Date().getFullYear();
+  const num  = String(students.length + 1).padStart(4,'0');
+  return `ST-${year}-${num}`;
+}
+
+function openAddStudent(){
+  editStudentIndex = -1;
+  document.getElementById('studentModalTitle').textContent = 'إضافة طالب جديد';
+  document.getElementById('sm_qaid').value    = genQaid();
+  document.getElementById('sm_name').value    = '';
+  document.getElementById('sm_grade').value   = '';
+  document.getElementById('sm_section').value = '';
+  document.getElementById('sm_phone').value   = '';
+  document.getElementById('sm_parent').value  = '';
+  document.getElementById('studentModal').style.display = 'flex';
+}
+
+function editStudent(i){
+  editStudentIndex = i;
+  const s = students[i];
+  document.getElementById('studentModalTitle').textContent = 'تعديل بيانات الطالب';
+  document.getElementById('sm_qaid').value    = s.qaid    || '';
+  document.getElementById('sm_name').value    = s.name    || '';
+  document.getElementById('sm_grade').value   = s.grade   || '';
+  document.getElementById('sm_section').value = s.section || '';
+  document.getElementById('sm_phone').value   = s.phone   || '';
+  document.getElementById('sm_parent').value  = s.parent  || '';
+  document.getElementById('studentModal').style.display = 'flex';
+}
+
+function closeStudentModal(){
+  document.getElementById('studentModal').style.display = 'none';
+}
+
+function saveStudentModal(){
+  const qaid    = document.getElementById('sm_qaid').value.trim();
+  const name    = document.getElementById('sm_name').value.trim();
+  const grade   = document.getElementById('sm_grade').value;
+  const section = document.getElementById('sm_section').value;
+  const phone   = document.getElementById('sm_phone').value.trim();
+  const parent  = document.getElementById('sm_parent').value.trim();
+
+  if(!name){ toast('⚠️ أدخل اسم الطالب'); return; }
+  if(!grade){ toast('⚠️ اختر الصف الدراسي'); return; }
+  if(!section){ toast('⚠️ اختر الشعبة'); return; }
+
+  if(editStudentIndex === -1){
+    const code = Math.floor(100000 + Math.random()*900000).toString();
+    students.push({ qaid, name, grade, section, phone, parent, code });
+    Object.keys(gradesDB).forEach(sub => { if(!gradesDB[sub]) gradesDB[sub]=[]; gradesDB[sub].push({}); });
+    toast('✅ تم إضافة ' + name);
+  } else {
+    students[editStudentIndex] = { ...students[editStudentIndex], qaid, name, grade, section, phone, parent };
+    toast('✅ تم تحديث بيانات ' + name);
+  }
+
+  closeStudentModal();
+  saveToCloud();
+  navigateTo('t-students');
+}
+
+function deleteStudent(i){
+  if(!confirm('حذف الطالب ' + students[i].name + '؟')) return;
+  const name = students[i].name;
+  students.splice(i,1);
+  Object.keys(gradesDB).forEach(sub => { if(gradesDB[sub]) gradesDB[sub].splice(i,1); });
+  saveToCloud();
+  toast('🗑 تم حذف ' + name);
+  navigateTo('t-students');
 }
 
 // ============ HELPERS ============
